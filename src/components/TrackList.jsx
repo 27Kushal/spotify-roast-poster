@@ -16,6 +16,7 @@ import {
   Info,
 } from 'lucide-react';
 import RoastCard from './RoastCard';
+import PosterCanvas from './PosterCanvas';
 
 export default function TrackList({
   user,
@@ -123,6 +124,21 @@ export default function TrackList({
             onProceedToPoster={onProceedToPoster}
           />
         </section>
+
+        {/* Phase 3: HTML5 Canvas Mood Board Poster & Download */}
+        {roastData && (
+          <section className="mb-14">
+            <PosterCanvas
+              user={user}
+              tracks={tracks}
+              stats={stats}
+              roastData={roastData}
+              currentTone={currentTone}
+              onRegenerateRoast={onRegenerateRoast}
+              isRegenerating={isRoastGenerating}
+            />
+          </section>
+        )}
 
         {/* Aggregate Stats Section */}
         {stats && (

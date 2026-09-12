@@ -36,6 +36,9 @@ function apiServerlessPlugin() {
 
         req.on('end', async () => {
           try {
+            const fullUrl = new URL(req.url, `http://${req.headers.host || '127.0.0.1:5173'}`);
+            req.query = Object.fromEntries(fullUrl.searchParams.entries());
+
             if (rawBody && req.headers['content-type']?.includes('application/json')) {
               req.body = JSON.parse(rawBody);
             } else {
@@ -50,6 +53,10 @@ function apiServerlessPlugin() {
             res.json = (data) => {
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(data));
+              return res;
+            };
+            res.send = (data) => {
+              res.end(data);
               return res;
             };
 

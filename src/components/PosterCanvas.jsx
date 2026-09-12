@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Download, Sparkles, Share2, RefreshCw, Check, Palette } from 'lucide-react';
+import { Download, Sparkles, Share2, RefreshCw, Check } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { extractVibrantPalette } from '../utils/colorExtraction';
 
 const CANVAS_WIDTH = 1080;
 const CANVAS_HEIGHT = 1920;
@@ -20,10 +19,8 @@ export default function PosterCanvas({
   const [isRendering, setIsRendering] = useState(true);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [copiedSuccess, setCopiedSuccess] = useState(false);
-  const [extractedPalette, setExtractedPalette] = useState(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
-  // 3D Perspective Tilt on Hover
   const handleMouseMove = (e) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
@@ -38,7 +35,6 @@ export default function PosterCanvas({
     setTilt({ x: 0, y: 0 });
   };
 
-  // Helper to load CORS-safe images with proxy fallback
   const loadCorsImage = (url) => {
     return new Promise((resolve) => {
       if (!url) return resolve(null);
@@ -56,27 +52,10 @@ export default function PosterCanvas({
     });
   };
 
-  // Helper: Rounded Rectangle Path
-  const drawRoundedRect = (ctx, x, y, width, height, radius) => {
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + width - radius, y);
-    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-    ctx.lineTo(x + width, y + height - radius);
-    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-    ctx.lineTo(x + radius, y + height);
-    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-    ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y);
-    ctx.closePath();
-  };
-
-  // Helper: Text Wrapping
   const wrapText = (ctx, text, maxWidth) => {
     const words = (text || '').split(' ');
     const lines = [];
     let currentLine = words[0] || '';
-
     for (let i = 1; i < words.length; i++) {
       const word = words[i];
       const width = ctx.measureText(currentLine + ' ' + word).width;
@@ -91,14 +70,12 @@ export default function PosterCanvas({
     return lines;
   };
 
-  // Helper: Tactile Film Grain / Noise Overlay (5-8% opacity)
-  const applyNoiseOverlay = (ctx, opacity = 0.07) => {
+  const applyNoiseOverlay = (ctx, opacity = 0.25) => {
     const noiseCanvas = document.createElement('canvas');
     noiseCanvas.width = 256;
     noiseCanvas.height = 256;
     const nCtx = noiseCanvas.getContext('2d');
     if (!nCtx) return;
-
     const imgData = nCtx.createImageData(256, 256);
     for (let i = 0; i < imgData.data.length; i += 4) {
       const val = Math.floor(Math.random() * 255);
@@ -108,7 +85,6 @@ export default function PosterCanvas({
       imgData.data[i + 3] = 255;
     }
     nCtx.putImageData(imgData, 0, 0);
-
     ctx.save();
     ctx.globalAlpha = opacity;
     ctx.globalCompositeOperation = 'overlay';
@@ -120,48 +96,281 @@ export default function PosterCanvas({
     ctx.restore();
   };
 
-  // Helper: Render an album cover with tilt and duotone/color tint
-  const drawTiltedAlbum = (ctx, img, x, y, size, angleDeg, tintColor) => {
-    ctx.save();
-    ctx.translate(x + size / 2, y + size / 2);
-    ctx.rotate((angleDeg * Math.PI) / 180);
-
-    // Deep drop shadow
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
-    ctx.shadowBlur = 45;
-    ctx.shadowOffsetY = 24;
-
-    // Rounded clipping
-    drawRoundedRect(ctx, -size / 2, -size / 2, size, size, 24);
-    ctx.clip();
-    ctx.drawImage(img, -size / 2, -size / 2, size, size);
-
-    // Subtle duotone / color-overlay tint matching the palette
-    ctx.shadowColor = 'transparent';
-    ctx.globalAlpha = 0.18;
-    ctx.fillStyle = tintColor;
-    ctx.fillRect(-size / 2, -size / 2, size, size);
-
-    // Subtle edge highlight
-    ctx.globalAlpha = 0.25;
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    ctx.restore();
-  };
-
-  // Master Render Function
   const renderPoster = useCallback(async () => {
+    // Wait for custom fonts to be ready
+    await document.fonts.ready;
+    
     const canvas = canvasRef.current;
     if (!canvas || !roastData || !stats) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
     setIsRendering(true);
 
-    // 1. Preload top 4 album cover images
-    const topTracksToUse = tracks.slice(0, 4);
+    const cBlue = '#0047FF';
+    const cPink = '#FF007F';
+    const cGreen = '#CCFF00';
+    const cPurple = '#5A189A';
+    const cOrange = '#FF6D00';
+    const cDark = '#0F172A';
+    const cWhite = '#FFFFFF';
+
+    // Base background
+    ctx.fillStyle = cBlue;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    applyNoiseOverlay(ctx, 0.25);
+
+    const margin = 80;
+    const innerWidth = CANVAS_WIDTH - margin * 2;
+
+    // 1. Header
+    let y = 80;
+    ctx.fillStyle = cGreen;
+    ctx.font = '100px "Anton", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText('SONIC MIRROR', margin, y);
+    
+    ctx.fillStyle = cWhite;
+    ctx.font = 'bold 36px "Courier Prime", monospace';
+    ctx.fillText('DEPT. OF MUSICAL PATHOLOGY', margin, y + 105);
+
+    // Case Info (Right Aligned)
+    ctx.textAlign = 'right';
+    const caseNum = Math.floor(Math.random() * 90000) + 10000;
+    ctx.fillText('CASE #SM-', CANVAS_WIDTH - margin - 120, y);
+    ctx.font = 'normal 48px "Courier Prime", monospace';
+    ctx.fillText(caseNum.toString(), CANVAS_WIDTH - margin, y - 5);
+    
+    ctx.font = 'bold 28px "Courier Prime", monospace';
+    ctx.fillStyle = cGreen;
+    ctx.fillText('DATE:', CANVAS_WIDTH - margin - 220, y + 112);
+    ctx.fillStyle = cWhite;
+    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
+    ctx.fillText(today, CANVAS_WIDTH - margin, y + 112);
+    
+    // Header underline
+    y += 180;
+    ctx.fillStyle = cGreen;
+    ctx.fillRect(margin, y, innerWidth, 10);
+
+    // 2. Intake Fields
+    y += 40;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = cGreen;
+    ctx.font = 'bold 24px "Courier Prime", monospace';
+    ctx.fillText('PATIENT NAME:', margin, y);
+    ctx.fillText('DOB / JOINED:', margin + 500, y);
+    
+    y += 40;
+    ctx.fillStyle = cWhite;
+    ctx.font = '36px "Courier Prime", monospace';
+    const patientName = (user?.display_name || 'UNKNOWN PATIENT').toUpperCase();
+    ctx.fillText(patientName, margin, y);
+    ctx.fillText('2014-08', margin + 500, y);
+    
+    // Underlines
+    y += 45;
+    ctx.fillStyle = cWhite;
+    ctx.fillRect(margin, y, 400, 4);
+    ctx.fillRect(margin + 500, y, 300, 4);
+
+    // 3. Vitals Waveform
+    y += 60;
+    const ecgHeight = 220;
+    // ECG Background
+    ctx.fillStyle = cGreen;
+    ctx.beginPath();
+    ctx.roundRect(margin, y, innerWidth, ecgHeight, 20);
+    ctx.fill();
+    // ECG Border
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = cDark;
+    ctx.stroke();
+    // ECG Shadow
+    ctx.fillStyle = cPink;
+    ctx.beginPath();
+    ctx.roundRect(margin + 16, y + 16, innerWidth, ecgHeight, 20);
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+
+    // Grid lines inside ECG
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(margin, y, innerWidth, ecgHeight, 20);
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.15)';
+    ctx.lineWidth = 3;
+    for(let i=1; i<4; i++) {
+      ctx.beginPath(); ctx.moveTo(margin, y + i * (ecgHeight/4)); ctx.lineTo(margin + innerWidth, y + i * (ecgHeight/4)); ctx.stroke();
+    }
+    for(let i=1; i<10; i++) {
+      ctx.beginPath(); ctx.moveTo(margin + i * (innerWidth/10), y); ctx.lineTo(margin + i * (innerWidth/10), y + ecgHeight); ctx.stroke();
+    }
+    
+    // Label
+    ctx.fillStyle = cDark;
+    ctx.globalAlpha = 0.8;
+    ctx.font = 'bold 28px "Courier Prime", monospace';
+    ctx.fillText('ECG // AUDIO VALENCE', margin + 20, y + 30);
+    ctx.globalAlpha = 1.0;
+
+    // The Waveform Line
+    ctx.strokeStyle = cBlue;
+    ctx.lineWidth = 7;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(margin, y + ecgHeight/2);
+    // Draw erratic zig zag
+    const points = [
+      [50, 0], [60, -40], [70, 60], [85, -60], [100, 0], [250, 0], 
+      [260, -80], [275, 80], [290, -20], [310, 0], [450, 0], [460, -10], 
+      [470, -50], [485, 90], [500, -80], [515, 20], [530, 0], [700, 0], 
+      [710, -70], [730, 70], [745, -20], [760, 0], [920, 0]
+    ];
+    let cx = margin;
+    let cy = y + ecgHeight/2;
+    points.forEach(pt => {
+      cx = margin + pt[0] * (innerWidth / 920);
+      let pY = cy + pt[1];
+      ctx.lineTo(cx, pY);
+    });
+    ctx.lineTo(margin + innerWidth, cy);
+    ctx.stroke();
+    ctx.restore();
+
+    // 4. Diagnosis (Pink Block)
+    y += ecgHeight + 80;
+    // Pink block full width
+    const diagHeight = 340;
+    ctx.fillStyle = cPink;
+    ctx.fillRect(0, y, CANVAS_WIDTH, diagHeight);
+    // Borders & shadows
+    ctx.fillStyle = cPurple;
+    ctx.fillRect(0, y + diagHeight, CANVAS_WIDTH, 20); // bottom shadow
+    ctx.lineWidth = 12;
+    ctx.strokeStyle = cDark;
+    ctx.beginPath();
+    ctx.moveTo(0, y); ctx.lineTo(CANVAS_WIDTH, y);
+    ctx.moveTo(0, y + diagHeight); ctx.lineTo(CANVAS_WIDTH, y + diagHeight);
+    ctx.stroke();
+    
+    ctx.fillStyle = cWhite;
+    ctx.font = 'bold 32px "Courier Prime", monospace';
+    ctx.fillText('PRIMARY DIAGNOSIS:', margin, y + 60);
+    
+    ctx.fillStyle = cDark;
+    ctx.font = '140px "Anton", sans-serif';
+    const archetype = (roastData.archetype || 'WHIPLASH ENTHUSIAST').toUpperCase();
+    const archetypeLines = wrapText(ctx, archetype, CANVAS_WIDTH - margin*2);
+    archetypeLines.forEach((line, i) => {
+      ctx.fillText(line, margin, y + 200 + i * 130);
+    });
+
+    // Stamp "CONFIRMED"
+    ctx.save();
+    ctx.translate(CANVAS_WIDTH - margin - 250, y + 160);
+    ctx.rotate(-10 * Math.PI / 180);
+    ctx.strokeStyle = cGreen;
+    ctx.lineWidth = 16;
+    ctx.beginPath();
+    ctx.roundRect(-200, -80, 400, 160, 20);
+    ctx.stroke();
+    ctx.fillStyle = cGreen;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '120px "Anton", sans-serif';
+    ctx.fillText('CONFIRMED', 0, 0);
+    ctx.restore();
+
+    // 5. Clinical Notes
+    y += diagHeight + 80;
+    ctx.fillStyle = cGreen;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.font = 'bold 32px "Courier Prime", monospace';
+    ctx.fillText('CLINICAL NOTES:', margin, y);
+
+    y += 60;
+    // Notes block background
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.2)'; // cDark/20
+    const notesLines = wrapText(ctx, roastData.roast || 'Patient exhibits symptoms of bad taste.', innerWidth - 60);
+    const notesHeight = notesLines.length * 55 + 60;
+    ctx.beginPath();
+    ctx.roundRect(margin, y, innerWidth, notesHeight, 20);
+    ctx.fill();
+    ctx.lineWidth = 12;
+    ctx.strokeStyle = cGreen;
+    ctx.beginPath();
+    ctx.moveTo(margin + 6, y + 20);
+    ctx.lineTo(margin + 6, y + notesHeight - 20);
+    ctx.stroke();
+
+    ctx.fillStyle = cWhite;
+    ctx.font = 'bold 36px "Courier Prime", monospace';
+    notesLines.forEach((line, i) => {
+      ctx.fillText(line, margin + 40, y + 30 + i * 55);
+    });
+
+    // 6. Vital Signs Table
+    y += notesHeight + 60;
+    const tableHeight = 320;
+    // Purple Block Full Width
+    ctx.fillStyle = cPurple;
+    ctx.fillRect(0, y, CANVAS_WIDTH, tableHeight);
+    ctx.fillStyle = cGreen;
+    ctx.fillRect(0, y + tableHeight, CANVAS_WIDTH, 16); // shadow
+    ctx.strokeStyle = cDark;
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(0, y); ctx.lineTo(CANVAS_WIDTH, y);
+    ctx.moveTo(0, y + tableHeight); ctx.lineTo(CANVAS_WIDTH, y + tableHeight);
+    ctx.stroke();
+
+    ctx.fillStyle = cGreen;
+    ctx.font = 'bold 32px "Courier Prime", monospace';
+    ctx.fillText('VITAL SIGNS:', margin, y + 40);
+
+    const tableY = y + 100;
+    const tWidth = innerWidth * 0.75; // 75% width
+    // Draw table background
+    ctx.fillStyle = cWhite;
+    ctx.fillRect(margin, tableY, tWidth, 180);
+    ctx.strokeRect(margin, tableY, tWidth, 180);
+    // Rows
+    ctx.beginPath(); ctx.moveTo(margin, tableY + 60); ctx.lineTo(margin + tWidth, tableY + 60); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(margin, tableY + 120); ctx.lineTo(margin + tWidth, tableY + 120); ctx.stroke();
+    // Cols
+    ctx.beginPath(); ctx.moveTo(margin + tWidth*0.4, tableY); ctx.lineTo(margin + tWidth*0.4, tableY + 180); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(margin + tWidth*0.65, tableY); ctx.lineTo(margin + tWidth*0.65, tableY + 180); ctx.stroke();
+
+    // Fill table data
+    ctx.font = 'bold 24px "Courier Prime", monospace';
+    const rows = [
+      { label: 'ENERGY LEVEL', val: `${stats.avgEnergy}%`, qual: 'ELEVATED / MANIC', bg: cOrange, text: cWhite },
+      { label: 'HAPPINESS (VALENCE)', val: `${stats.avgValence}%`, qual: 'CRITICALLY LOW', bg: cBlue, text: cWhite },
+      { label: 'HEART RATE (TEMPO)', val: `${stats.avgTempo} BPM`, qual: 'STABLE', bg: cGreen, text: cDark },
+    ];
+    rows.forEach((r, i) => {
+      const ry = tableY + i * 60;
+      ctx.fillStyle = cDark;
+      ctx.fillText(r.label, margin + 20, ry + 16);
+      ctx.font = 'bold 32px "Courier Prime", monospace';
+      ctx.fillText(r.val, margin + tWidth*0.4 + 20, ry + 12);
+      ctx.font = 'bold 24px "Courier Prime", monospace';
+      
+      // Qualifier bg
+      ctx.fillStyle = r.bg;
+      ctx.fillRect(margin + tWidth*0.65, ry, tWidth*0.35, 60);
+      ctx.fillStyle = r.text;
+      ctx.font = 'italic bold 24px "Courier Prime", monospace';
+      ctx.fillText(r.qual, margin + tWidth*0.65 + 20, ry + 16);
+    });
+
+    // 7. Attached Exhibits
+    // Load top 2 covers
+    const topTracksToUse = tracks.slice(0, 2);
     const loadedImages = (
       await Promise.all(
         topTracksToUse.map((t) => {
@@ -171,197 +380,110 @@ export default function PosterCanvas({
       )
     ).filter(Boolean);
 
-    // 2. Extract vibrant palette from album art
-    const palette = extractVibrantPalette(loadedImages);
-    setExtractedPalette(palette);
-
-    // =========================================================
-    // LAYER 1: Dynamic Mesh / Blob Gradient Background
-    // =========================================================
-    // Base dark tinted fill
-    ctx.fillStyle = palette.darkBase || '#08060c';
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-    // Large organic blurred blobs (asymmetric, 40-70% opacity)
-    (palette.blobs || []).forEach((b) => {
-      const grad = ctx.createRadialGradient(b.x, b.y, 40, b.x, b.y, b.r);
-      grad.addColorStop(0, b.color);
-      grad.addColorStop(1, 'transparent');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    });
-
-    // Central soft ambient glow
-    const centerAura = ctx.createRadialGradient(
-      CANVAS_WIDTH * 0.45,
-      CANVAS_HEIGHT * 0.48,
-      100,
-      CANVAS_WIDTH * 0.45,
-      CANVAS_HEIGHT * 0.48,
-      750
-    );
-    centerAura.addColorStop(0, `${palette.color2}44`);
-    centerAura.addColorStop(1, 'transparent');
-    ctx.fillStyle = centerAura;
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-    // =========================================================
-    // LAYER 2: Tactile Film Grain Texture (5-8% opacity)
-    // =========================================================
-    applyNoiseOverlay(ctx, 0.07);
-
-    // =========================================================
-    // LAYER 3: Minimal Header & Watermark Tag
-    // =========================================================
-    ctx.save();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
-    ctx.font = '700 18px "Space Grotesk", sans-serif';
-    ctx.letterSpacing = '3px';
-    ctx.fillText('SONIC MIRROR // 2026 AUDIO DNA', 80, 105);
-
-    const userName = (user?.display_name || 'AUTHENTICATED LISTENER').toUpperCase();
-    ctx.textAlign = 'right';
-    ctx.fillStyle = palette.color1;
-    ctx.font = '800 18px "Space Grotesk", sans-serif';
-    ctx.letterSpacing = '2px';
-    ctx.fillText(userName, CANVAS_WIDTH - 80, 105);
-    ctx.restore();
-
-    // =========================================================
-    // LAYER 4: Scattered, Overlapping Rotated Album Art Collage
-    // =========================================================
-    if (loadedImages.length > 0) {
-      // Collage layout: 3-4 scattered cards with -7° to +6° rotation offsets
-      const covers = [
-        { img: loadedImages[0], x: 80, y: 155, size: 320, rot: -5, tint: palette.color1 },
-        { img: loadedImages[1] || loadedImages[0], x: 340, y: 140, size: 280, rot: 5, tint: palette.color2 },
-        { img: loadedImages[2] || loadedImages[0], x: 580, y: 175, size: 260, rot: -3, tint: palette.color3 },
-        { img: loadedImages[3] || loadedImages[1], x: 780, y: 220, size: 220, rot: 7, tint: palette.color1 },
-      ];
-
-      covers.forEach((c) => {
-        if (c.img) {
-          drawTiltedAlbum(ctx, c.img, c.x, c.y, c.size, c.rot, c.tint);
-        }
-      });
-    }
-
-    // =========================================================
-    // LAYER 5: Giant Dominant Archetype Headline (The Focal Point)
-    // =========================================================
-    const headlineY = 560;
-    ctx.save();
-    ctx.fillStyle = '#ffffff';
-    // Huge Archivo Black display font (dominates 40-50% of the poster)
-    ctx.font = '900 96px "Archivo Black", sans-serif';
-    ctx.letterSpacing = '-2px';
-    ctx.textAlign = 'left';
-
-    // Deep contrast shadow behind title
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-    ctx.shadowBlur = 30;
-    ctx.shadowOffsetY = 10;
-
-    const archetype = (roastData.archetype || 'THE CURATED MELTDOWN').toUpperCase();
-    const headlineLines = wrapText(ctx, archetype, 920);
-
-    headlineLines.forEach((line, idx) => {
-      ctx.fillText(line, 80, headlineY + idx * 105);
-    });
-
-    const headlineBottomY = headlineY + headlineLines.length * 105;
-    ctx.restore();
-
-    // =========================================================
-    // LAYER 6: Borderless Pull-Quote (Directly on Gradient)
-    // =========================================================
-    const quoteY = headlineBottomY + 40;
-    ctx.save();
-    ctx.textAlign = 'left';
-    ctx.fillStyle = palette.color2 || '#ffd166';
-    ctx.font = 'italic 700 38px "Inter", sans-serif';
-
-    // Shadow for legibility over gradient
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-    ctx.shadowBlur = 20;
-
-    const burnQuote = roastData.burnQuote || '"100% emotional avoidance."';
-    const quoteLines = wrapText(ctx, burnQuote, 920);
-    quoteLines.slice(0, 2).forEach((line, idx) => {
-      ctx.fillText(line, 80, quoteY + idx * 52);
-    });
-
-    const quoteBottomY = quoteY + quoteLines.length * 52;
-    ctx.restore();
-
-    // =========================================================
-    // LAYER 7: Editorial Roast Paragraph
-    // =========================================================
-    const roastY = quoteBottomY + 50;
-    ctx.save();
-    ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.font = '500 28px "Inter", sans-serif';
-
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-    ctx.shadowBlur = 18;
-
-    const roastLines = [];
-    const paragraphs = (roastData.roast || '').split('\n').filter(Boolean);
-    paragraphs.forEach((p) => {
-      const wrapped = wrapText(ctx, p, 920);
-      roastLines.push(...wrapped);
-    });
-
-    const maxLines = Math.min(roastLines.length, 5);
-    for (let i = 0; i < maxLines; i++) {
-      ctx.fillText(roastLines[i], 80, roastY + i * 46);
-    }
-    ctx.restore();
-
-    // =========================================================
-    // LAYER 8: Inline Clean Stats (No Boxes, No Borders)
-    // =========================================================
-    const statsY = 1630;
-    const statsItems = [
-      { num: `${stats.avgEnergy}%`, label: 'ENERGY', color: palette.color1 },
-      { num: `${stats.avgValence}%`, label: 'HAPPINESS', color: palette.color2 },
-      { num: `${stats.avgTempo}`, label: 'BPM TEMPO', color: palette.color3 },
-    ];
-
-    const statSpacing = 310;
-    statsItems.forEach((st, idx) => {
-      const sx = 80 + idx * statSpacing;
+    if (loadedImages.length >= 1) {
+      // Draw Exhibit Box
+      const exhX = margin + tWidth + 40;
+      const exhY = y - 80;
       ctx.save();
-      ctx.textAlign = 'left';
+      ctx.translate(exhX + 100, exhY + 160);
+      
+      // Label
+      ctx.rotate(4 * Math.PI / 180);
+      ctx.fillStyle = cDark;
+      ctx.fillRect(-100, -160, 240, 40);
+      ctx.lineWidth = 4;
+      ctx.strokeRect(-100, -160, 240, 40);
+      ctx.fillStyle = cGreen;
+      ctx.font = 'bold 24px "Courier Prime", monospace';
+      ctx.fillText('ATTACHED EXHIBITS', -80, -152);
+      ctx.rotate(-4 * Math.PI / 180);
 
-      // Big bold number directly on gradient
-      ctx.fillStyle = st.color;
-      ctx.font = '900 80px "Archivo Black", sans-serif';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-      ctx.shadowBlur = 24;
-      ctx.fillText(st.num, sx, statsY);
+      // Photo 1
+      ctx.rotate(-6 * Math.PI / 180);
+      ctx.fillStyle = cOrange;
+      ctx.fillRect(-80, -90, 220, 250);
+      ctx.lineWidth = 6;
+      ctx.strokeRect(-80, -90, 220, 250);
+      ctx.fillStyle = cDark; // shadow
+      ctx.fillRect(-65, -75, 220, 250);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(loadedImages[0], -65, -75, 190, 190);
+      ctx.strokeRect(-65, -75, 190, 190);
+      ctx.font = 'bold 20px "Courier Prime", monospace';
+      ctx.fillText('EXH-A', -50, 130);
+      // Tape
+      ctx.fillStyle = cGreen;
+      ctx.translate(30, -90);
+      ctx.rotate(8 * Math.PI / 180);
+      ctx.fillRect(-40, -15, 80, 30);
+      ctx.strokeRect(-40, -15, 80, 30);
+      ctx.rotate(-8 * Math.PI / 180);
+      ctx.translate(-30, 90);
+      ctx.rotate(6 * Math.PI / 180);
 
-      // Clean supporting label underneath
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-      ctx.font = '700 18px "Space Grotesk", sans-serif';
-      ctx.letterSpacing = '3px';
-      ctx.shadowBlur = 0;
-      ctx.fillText(st.label, sx, statsY + 36);
-      ctx.restore();
-    });
+      // Photo 2
+      if (loadedImages[1]) {
+        ctx.translate(20, 140);
+        ctx.rotate(3 * Math.PI / 180);
+        ctx.fillStyle = cPink;
+        ctx.fillRect(-80, -90, 220, 250);
+        ctx.lineWidth = 6;
+        ctx.strokeRect(-80, -90, 220, 250);
+        ctx.fillStyle = cDark;
+        ctx.fillRect(-65, -75, 220, 250);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.drawImage(loadedImages[1], -65, -75, 190, 190);
+        ctx.strokeRect(-65, -75, 190, 190);
+        ctx.font = 'bold 20px "Courier Prime", monospace';
+        ctx.fillText('EXH-B', -50, 130);
+        // Tape
+        ctx.fillStyle = cGreen;
+        ctx.translate(30, -90);
+        ctx.rotate(-5 * Math.PI / 180);
+        ctx.fillRect(-40, -15, 80, 30);
+        ctx.strokeRect(-40, -15, 80, 30);
+        ctx.restore();
+      } else {
+        ctx.restore();
+      }
+    }
 
-    // =========================================================
-    // LAYER 9: Minimal Subtle Corner Watermark
-    // =========================================================
+    // 8. Footer
+    const footerY = CANVAS_HEIGHT - 180;
+    ctx.fillStyle = cGreen;
+    ctx.fillRect(0, footerY - 16, CANVAS_WIDTH, 16);
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = cDark;
+    ctx.beginPath();
+    ctx.moveTo(0, footerY); ctx.lineTo(CANVAS_WIDTH, footerY);
+    ctx.stroke();
+
+    ctx.fillStyle = cWhite;
+    ctx.font = '100px "Courier Prime", monospace';
+    ctx.fillText('|||| | || || | || |', margin, footerY + 60);
+    ctx.fillStyle = cGreen;
+    ctx.font = 'bold 28px "Courier Prime", monospace';
+    ctx.letterSpacing = '6px';
+    ctx.fillText('PT-ID: 8092-2244-SM', margin, footerY + 130);
+    ctx.letterSpacing = '0px';
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = cWhite;
+    ctx.font = 'bold 32px "Courier Prime", monospace';
+    ctx.fillText('AUTHORIZING PHYSICIAN', CANVAS_WIDTH - margin - 200, footerY + 130);
+    ctx.beginPath();
+    ctx.moveTo(CANVAS_WIDTH - margin - 400, footerY + 90);
+    ctx.lineTo(CANVAS_WIDTH - margin, footerY + 90);
+    ctx.stroke();
+
     ctx.save();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-    ctx.font = '600 18px "Space Grotesk", sans-serif';
-    ctx.letterSpacing = '2px';
-    ctx.fillText('● SONIC MIRROR', 80, 1840);
-
-    ctx.textAlign = 'right';
-    ctx.fillText('SPOTIFY WRAPPED 24/7', CANVAS_WIDTH - 80, 1840);
+    ctx.translate(CANVAS_WIDTH - margin - 220, footerY + 60);
+    ctx.rotate(-6 * Math.PI / 180);
+    ctx.fillStyle = cPink;
+    ctx.font = '100px "Nothing You Could Do", cursive';
+    // Mix blend equivalent for canvas signature
+    ctx.globalCompositeOperation = 'screen';
+    ctx.fillText('Dr. S. Mirror', 0, 0);
     ctx.restore();
 
     setIsRendering(false);
@@ -371,33 +493,27 @@ export default function PosterCanvas({
     renderPoster();
   }, [renderPoster]);
 
-  // Download High-Resolution PNG
   const handleDownload = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     canvas.toBlob(
       (blob) => {
         if (!blob) return;
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const safeArchetype = (roastData?.archetype || 'sonic-mirror-roast')
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-');
+        const safeArchetype = (roastData?.archetype || 'sonic-mirror-roast').toLowerCase().replace(/[^a-z0-9]+/g, '-');
         a.download = `${safeArchetype}-poster.png`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-
         confetti({
           particleCount: 90,
           spread: 80,
           origin: { y: 0.6 },
-          colors: [extractedPalette?.color1 || '#1DB954', extractedPalette?.color2 || '#ec4899', '#ffffff'],
+          colors: ['#0047FF', '#FF007F', '#CCFF00'],
         });
-
         setDownloadSuccess(true);
         setTimeout(() => setDownloadSuccess(false), 3000);
       },
@@ -406,14 +522,11 @@ export default function PosterCanvas({
     );
   };
 
-  // Share / Copy Image
   const handleShare = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     canvas.toBlob(async (blob) => {
       if (!blob) return;
-
       const file = new File([blob], 'sonic-mirror-roast.png', { type: 'image/png' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
@@ -427,7 +540,6 @@ export default function PosterCanvas({
           if (err.name !== 'AbortError') console.warn('Share error:', err);
         }
       }
-
       try {
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
         setCopiedSuccess(true);
@@ -441,21 +553,15 @@ export default function PosterCanvas({
 
   return (
     <div id="poster-section" className="flex flex-col items-center w-full max-w-5xl mx-auto py-8">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-spotify-green/10 border border-spotify-green/30 text-spotify-green text-xs font-mono font-bold tracking-widest uppercase mb-3">
-          <Sparkles className="w-4 h-4 animate-spin" style={{ animationDuration: '4s' }} />
-          <span>Spotify Wrapped Quality Graphic</span>
-        </div>
-        <h2 className="text-4xl sm:text-6xl font-black text-white tracking-tight font-archivo">
-          Your Shareable <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-400 to-cyan-300">Mood Board</span>
+      <div className="text-center mb-12">
+        <h2 className="text-4xl sm:text-6xl font-display text-white tracking-tight">
+          YOUR <span className="text-studio-glow">DIAGNOSTIC CHART</span>
         </h2>
-        <p className="text-sm sm:text-base text-zinc-400 mt-2 max-w-lg mx-auto font-sans">
-          Organic mesh gradient derived from your album art, scattered tilted collage, and bold Archivo typography.
+        <p className="text-sm text-static-grey mt-4 max-w-lg mx-auto uppercase tracking-widest">
+          Spotify Wrapped Aesthetics × Medical Intake Form
         </p>
       </div>
 
-      {/* 3D Perspective Tilt Card */}
       <div
         ref={containerRef}
         onMouseMove={handleMouseMove}
@@ -464,44 +570,39 @@ export default function PosterCanvas({
           transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
           transition: 'transform 0.15s ease-out',
         }}
-        className="relative w-full max-w-[380px] sm:max-w-[440px] aspect-[9/16] rounded-[36px] p-2 bg-gradient-to-b from-white/20 via-white/5 to-white/10 shadow-[0_30px_70px_rgba(0,0,0,0.85)] border border-white/20 group"
+        className="relative w-full max-w-[380px] sm:max-w-[440px] aspect-[9/16] p-2 bg-void shadow-2xl border border-static-grey group"
       >
-        <div className="relative w-full h-full rounded-[28px] overflow-hidden bg-black flex items-center justify-center">
+        <div className="relative w-full h-full overflow-hidden bg-black flex items-center justify-center">
           {isRendering && (
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center z-20 text-center p-6">
-              <RefreshCw className="w-8 h-8 text-spotify-green animate-spin mb-3" />
-              <p className="text-sm font-bold text-white font-grotesk">Synthesizing mesh gradient & typography...</p>
+            <div className="absolute inset-0 bg-void/80 backdrop-blur-md flex flex-col items-center justify-center z-20 text-center p-6">
+              <RefreshCw className="w-8 h-8 text-studio-glow animate-spin mb-3" />
+              <p className="text-sm font-bold text-white font-body uppercase tracking-wider">Rendering Diagnostics...</p>
             </div>
           )}
-
           <canvas
             ref={canvasRef}
             width={CANVAS_WIDTH}
             height={CANVAS_HEIGHT}
             className="w-full h-full object-contain block select-none pointer-events-none"
           />
-
-          {/* Light Sheen */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent pointer-events-none" />
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex flex-wrap items-center justify-center gap-4 mt-8 w-full max-w-md">
+      <div className="flex flex-wrap items-center justify-center gap-4 mt-12 w-full max-w-md">
         <button
           onClick={handleDownload}
           disabled={isRendering}
-          className="flex-1 inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-full bg-gradient-to-r from-spotify-green to-emerald-400 hover:from-[#1ed760] hover:to-emerald-300 text-black font-black text-sm shadow-xl shadow-spotify-green/25 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+          className="flex-1 inline-flex items-center justify-center gap-2.5 px-7 py-4 border-2 border-studio-glow bg-studio-glow text-void font-display text-2xl uppercase tracking-wider hover:bg-void hover:text-studio-glow transition-all disabled:opacity-50"
         >
           {downloadSuccess ? (
             <>
-              <Check className="w-5 h-5" />
-              <span>Downloaded 1080x1920 PNG!</span>
+              <Check className="w-6 h-6" />
+              <span>DOWNLOADED</span>
             </>
           ) : (
             <>
-              <Download className="w-5 h-5" />
-              <span>Download Poster (PNG)</span>
+              <Download className="w-6 h-6" />
+              <span>EXPORT CHART</span>
             </>
           )}
         </button>
@@ -509,47 +610,22 @@ export default function PosterCanvas({
         <button
           onClick={handleShare}
           disabled={isRendering}
-          className="inline-flex items-center justify-center gap-2 px-5 py-4 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-sm transition-all border border-white/10 hover:scale-105 active:scale-95"
+          className="inline-flex items-center justify-center gap-2 px-5 py-4 border-2 border-static-grey text-sleeve-white font-display text-2xl uppercase tracking-wider hover:border-sleeve-white transition-all disabled:opacity-50"
           title="Share or copy poster"
         >
           {copiedSuccess ? (
             <>
-              <Check className="w-4 h-4 text-spotify-green" />
-              <span>Copied!</span>
+              <Check className="w-6 h-6 text-studio-glow" />
+              <span>COPIED</span>
             </>
           ) : (
             <>
-              <Share2 className="w-4 h-4" />
-              <span>Share</span>
+              <Share2 className="w-5 h-5" />
+              <span>SHARE</span>
             </>
           )}
         </button>
-
-        {onRegenerateRoast && (
-          <button
-            onClick={() => onRegenerateRoast(currentTone)}
-            disabled={isRegenerating || isRendering}
-            className="inline-flex items-center justify-center gap-2 px-5 py-4 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white font-semibold text-xs transition-all border border-white/5"
-            title="Generate a new roast"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRegenerating ? 'animate-spin' : ''}`} />
-            <span>Remix Roast</span>
-          </button>
-        )}
       </div>
-
-      {/* Extracted Palette Indicator */}
-      {extractedPalette && (
-        <div className="flex items-center gap-3 mt-6 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-zinc-400 backdrop-blur-md">
-          <Palette className="w-3.5 h-3.5 text-spotify-green" />
-          <span>Extracted Palette:</span>
-          <div className="flex items-center gap-2">
-            <span className="w-4 h-4 rounded-full border border-white/20 shadow-sm" style={{ backgroundColor: extractedPalette.color1 }} title={extractedPalette.color1} />
-            <span className="w-4 h-4 rounded-full border border-white/20 shadow-sm" style={{ backgroundColor: extractedPalette.color2 }} title={extractedPalette.color2} />
-            <span className="w-4 h-4 rounded-full border border-white/20 shadow-sm" style={{ backgroundColor: extractedPalette.color3 }} title={extractedPalette.color3} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

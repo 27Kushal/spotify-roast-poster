@@ -19,6 +19,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        archivo: ['"Archivo Black"', 'sans-serif'],
         syne: ['Syne', 'sans-serif'],
         bebas: ['"Bebas Neue"', 'sans-serif'],
         grotesk: ['"Space Grotesk"', 'sans-serif'],

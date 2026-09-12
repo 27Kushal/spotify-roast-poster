@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
+    "colorthief": "^3.5.0",
     "dotenv": "^17.4.2",
     "lucide-react": "^1.45.0",
     "react": "^19.2.8",

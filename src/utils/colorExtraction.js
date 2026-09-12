@@ -1,21 +1,14 @@
-// Color extraction utility to derive dominant palettes from album covers
+import { getPaletteSync } from 'colorthief';
 
 /**
- * Converts RGB to hex string
+ * Converts RGB array or values to hex string
  */
 export function rgbToHex(r, g, b) {
-  return '#' + [r, g, b].map((x) => Math.round(x).toString(16).padStart(2, '0')).join('');
+  return '#' + [r, g, b].map((x) => Math.round(Math.min(255, Math.max(0, x))).toString(16).padStart(2, '0')).join('');
 }
 
 /**
- * Calculates RGB luminance
- */
-function getLuminance(r, g, b) {
-  return 0.299 * r + 0.587 * g + 0.114 * b;
-}
-
-/**
- * Calculates color saturation
+ * Calculates saturation (0 to 1)
  */
 function getSaturation(r, g, b) {
   const max = Math.max(r, g, b);
@@ -25,94 +18,126 @@ function getSaturation(r, g, b) {
 }
 
 /**
- * Extracts dominant and accent colors from an array of loaded HTMLImageElements
+ * Calculates relative luminance
  */
-export function extractPaletteFromImages(imageElements = []) {
-  const defaultPalette = {
-    backgroundDark: '#0d0c11',
-    accentPrimary: '#1DB954',
-    accentSecondary: '#3b82f6',
-    glowColor: 'rgba(29, 185, 84, 0.25)',
-    swatches: ['#1DB954', '#3b82f6', '#ec4899', '#f59e0b'],
+function getLuminance(r, g, b) {
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+/**
+ * Extracts 2-3 vibrant, saturated dominant colors from album cover images
+ */
+export function extractVibrantPalette(images = []) {
+  const fallbackPalette = {
+    color1: '#ff3366', // Vibrant energetic pink
+    color2: '#7928ca', // Deep purple
+    color3: '#00dfd8', // Electric cyan
+    darkBase: '#08060c',
+    blobs: [
+      { color: 'rgba(255, 51, 102, 0.65)', x: 180, y: 350, r: 520 },
+      { color: 'rgba(121, 40, 202, 0.60)', x: 920, y: 750, r: 600 },
+      { color: 'rgba(0, 223, 216, 0.50)', x: 300, y: 1450, r: 550 },
+      { color: 'rgba(255, 90, 0, 0.45)', x: 800, y: 1650, r: 480 },
+    ],
   };
 
-  if (!imageElements || imageElements.length === 0) {
-    return defaultPalette;
-  }
+  if (!images || images.length === 0) return fallbackPalette;
 
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  if (!ctx) return defaultPalette;
+  const collectedColors = [];
 
-  canvas.width = 20;
-  canvas.height = 20;
-
-  const colorBuckets = [];
-
-  for (const img of imageElements) {
+  for (const img of images) {
     try {
-      ctx.clearRect(0, 0, 20, 20);
-      ctx.drawImage(img, 0, 0, 20, 20);
-      const imgData = ctx.getImageData(0, 0, 20, 20).data;
-
-      for (let i = 0; i < imgData.length; i += 16) {
-        const r = imgData[i];
-        const g = imgData[i + 1];
-        const b = imgData[i + 2];
-        const a = imgData[i + 3];
-
-        if (a > 128) {
-          const lum = getLuminance(r, g, b);
-          const sat = getSaturation(r, g, b);
-          // Avoid pure blacks and pure whites for accents
-          if (lum > 25 && lum < 230 && sat > 0.2) {
-            colorBuckets.push({ r, g, b, lum, sat });
-          }
+      if (img.complete && img.naturalWidth > 0) {
+        const palette = getPaletteSync(img, 5);
+        if (palette && palette.length > 0) {
+          palette.forEach(([r, g, b]) => {
+            const sat = getSaturation(r, g, b);
+            const lum = getLuminance(r, g, b);
+            // Prioritize vibrant colors with good saturation and visible luminance
+            if (sat > 0.25 && lum > 0.18 && lum < 0.85) {
+              collectedColors.push({ r, g, b, sat, lum });
+            }
+          });
         }
       }
-    } catch {
-      // If canvas is tainted or image failed, continue
+    } catch (e) {
+      // Fallback to manual canvas sampling if colorthief throws
     }
   }
 
-  if (colorBuckets.length === 0) {
-    return defaultPalette;
+  // Fallback to canvas sampling if ColorThief couldn't inspect
+  if (collectedColors.length < 2) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 16;
+    canvas.height = 16;
+
+    for (const img of images) {
+      try {
+        ctx.drawImage(img, 0, 0, 16, 16);
+        const data = ctx.getImageData(0, 0, 16, 16).data;
+        for (let i = 0; i < data.length; i += 16) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const sat = getSaturation(r, g, b);
+          const lum = getLuminance(r, g, b);
+          if (sat > 0.2 && lum > 0.15 && lum < 0.85) {
+            collectedColors.push({ r, g, b, sat, lum });
+          }
+        }
+      } catch (e) {}
+    }
   }
 
-  // Sort by highest saturation
-  colorBuckets.sort((a, b) => b.sat - a.sat);
+  if (collectedColors.length === 0) {
+    return fallbackPalette;
+  }
 
-  const primary = colorBuckets[0];
-  // Pick secondary with distinct color distance from primary
-  const secondary =
-    colorBuckets.find((c) => {
-      const diff = Math.abs(c.r - primary.r) + Math.abs(c.g - primary.g) + Math.abs(c.b - primary.b);
-      return diff > 80;
-    }) || colorBuckets[Math.min(5, colorBuckets.length - 1)];
+  // Sort by saturation descending
+  collectedColors.sort((a, b) => b.sat - a.sat);
 
-  const tertiary =
-    colorBuckets.find((c) => {
-      const diff1 = Math.abs(c.r - primary.r) + Math.abs(c.g - primary.g) + Math.abs(c.b - primary.b);
-      const diff2 = Math.abs(c.r - secondary.r) + Math.abs(c.g - secondary.g) + Math.abs(c.b - secondary.b);
-      return diff1 > 60 && diff2 > 60;
-    }) || colorBuckets[Math.floor(colorBuckets.length / 2)];
+  const c1 = collectedColors[0];
 
-  const primaryHex = rgbToHex(primary.r, primary.g, primary.b);
-  const secondaryHex = rgbToHex(secondary.r, secondary.g, secondary.b);
-  const tertiaryHex = rgbToHex(tertiary.r, tertiary.g, tertiary.b);
+  // Pick c2 with highest color distance from c1
+  let c2 = collectedColors.find((c) => {
+    const dist = Math.hypot(c.r - c1.r, c.g - c1.g, c.b - c1.b);
+    return dist > 90;
+  }) || collectedColors[1] || c1;
 
-  // Dark background derived from primary tone with 90% darkening
-  const bgR = Math.max(8, Math.round(primary.r * 0.08));
-  const bgG = Math.max(8, Math.round(primary.g * 0.08));
-  const bgB = Math.max(12, Math.round(primary.b * 0.10));
-  const backgroundDark = rgbToHex(bgR, bgG, bgB);
+  // Pick c3 with highest distance from both c1 and c2
+  let c3 = collectedColors.find((c) => {
+    const d1 = Math.hypot(c.r - c1.r, c.g - c1.g, c.b - c1.b);
+    const d2 = Math.hypot(c.r - c2.r, c.g - c2.g, c.b - c2.b);
+    return d1 > 70 && d2 > 70;
+  }) || collectedColors[2] || { r: 0, g: 223, b: 216 };
+
+  const hex1 = rgbToHex(c1.r, c1.g, c1.b);
+  const hex2 = rgbToHex(c2.r, c2.g, c2.b);
+  const hex3 = rgbToHex(c3.r, c3.g, c3.b);
+
+  // Very dark tinted base background
+  const darkR = Math.max(6, Math.round(c1.r * 0.05));
+  const darkG = Math.max(6, Math.round(c1.g * 0.05));
+  const darkB = Math.max(10, Math.round(c1.b * 0.08));
+  const darkBase = rgbToHex(darkR, darkG, darkB);
+
+  // Asymmetrical organic blurred blobs for Spotify Wrapped mesh effect
+  const blobs = [
+    { color: `rgba(${c1.r}, ${c1.g}, ${c1.b}, 0.65)`, x: 160, y: 380, r: 560 },
+    { color: `rgba(${c2.r}, ${c2.g}, ${c2.b}, 0.58)`, x: 920, y: 780, r: 620 },
+    { color: `rgba(${c3.r}, ${c3.g}, ${c3.b}, 0.52)`, x: 260, y: 1420, r: 580 },
+    { color: `rgba(${c1.r}, ${c1.g}, ${c1.b}, 0.45)`, x: 880, y: 1680, r: 520 },
+  ];
 
   return {
-    backgroundDark,
-    accentPrimary: primaryHex,
-    accentSecondary: secondaryHex,
-    accentTertiary: tertiaryHex,
-    glowColor: `rgba(${primary.r}, ${primary.g}, ${primary.b}, 0.25)`,
-    swatches: [primaryHex, secondaryHex, tertiaryHex, '#1DB954'],
+    color1: hex1,
+    color2: hex2,
+    color3: hex3,
+    rgb1: c1,
+    rgb2: c2,
+    rgb3: c3,
+    darkBase,
+    blobs,
   };
 }

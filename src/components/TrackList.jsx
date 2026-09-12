@@ -15,8 +15,21 @@ import {
   Terminal,
   Info,
 } from 'lucide-react';
+import RoastCard from './RoastCard';
 
-export default function TrackList({ user, tracks, artists, stats, onLogout, onProceedToRoast }) {
+export default function TrackList({
+  user,
+  tracks,
+  artists,
+  stats,
+  roastData,
+  isRoastGenerating,
+  roastError,
+  currentTone,
+  onRegenerateRoast,
+  onProceedToPoster,
+  onLogout,
+}) {
   return (
     <div className="min-h-screen bg-spotify-black text-white pb-24">
       {/* Top Navbar */}
@@ -98,6 +111,18 @@ export default function TrackList({ user, tracks, artists, stats, onLogout, onPr
             </span>
           </div>
         )}
+
+        {/* AI Roast Section (Phase 2) */}
+        <section className="mb-10">
+          <RoastCard
+            roastData={roastData}
+            isGenerating={isRoastGenerating}
+            error={roastError}
+            currentTone={currentTone}
+            onRegenerate={onRegenerateRoast}
+            onProceedToPoster={onProceedToPoster}
+          />
+        </section>
 
         {/* Aggregate Stats Section */}
         {stats && (

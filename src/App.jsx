@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSpotifyAuth } from './hooks/useSpotifyAuth';
 import { useSpotifyData } from './hooks/useSpotifyData';
+import { useRoast } from './hooks/useRoast';
 import LandingPage from './components/LandingPage';
 import Callback from './components/Callback';
 import TrackList from './components/TrackList';
@@ -28,6 +29,22 @@ export default function App() {
     error: dataError,
     refetch,
   } = useSpotifyData(token);
+
+  const {
+    roastData,
+    isGenerating: isRoastGenerating,
+    error: roastError,
+    currentTone,
+    generateRoast,
+    regenerate: regenerateRoast,
+  } = useRoast(stats, tracks, artists);
+
+  // Automatically trigger roast generation when Spotify data is ready
+  useEffect(() => {
+    if (stats && tracks.length > 0 && !roastData && !isRoastGenerating && !roastError) {
+      generateRoast('brutal');
+    }
+  }, [stats, tracks, roastData, isRoastGenerating, roastError, generateRoast]);
 
   // Check if current view is the OAuth callback
   const [isCallbackRoute, setIsCallbackRoute] = useState(() => {
@@ -90,7 +107,7 @@ export default function App() {
     );
   }
 
-  // 4. Authenticated Dashboard (Steps 1–3 Complete)
+  // 4. Authenticated Dashboard (Steps 1–5 Complete)
   if (isAuthenticated && tracks.length > 0) {
     return (
       <TrackList
@@ -98,6 +115,16 @@ export default function App() {
         tracks={tracks}
         artists={artists}
         stats={stats}
+        roastData={roastData}
+        isRoastGenerating={isRoastGenerating}
+        roastError={roastError}
+        currentTone={currentTone}
+        onRegenerateRoast={regenerateRoast}
+        onProceedToPoster={() => {
+          // Will link to Phase 3 poster view
+          const el = document.getElementById('poster-section');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
         onLogout={logout}
       />
     );

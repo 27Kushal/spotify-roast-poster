@@ -74,4 +74,8 @@ function apiServerlessPlugin() {
 
 export default defineConfig({
   plugins: [react(), apiServerlessPlugin()],
+  server: {
+    host: true,
+    port: 5173,
+  },
 });

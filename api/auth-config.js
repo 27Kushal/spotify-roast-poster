@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   }
 
   const clientId = process.env.SPOTIFY_CLIENT_ID || '';
-  const redirectUri = process.env.SPOTIFY_REDIRECT_URI || 'http://localhost:5173/callback';
+  const redirectUri = process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:5173/callback';
 
   return res.status(200).json({
     clientId,

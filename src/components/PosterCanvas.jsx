@@ -222,14 +222,10 @@ export default function PosterCanvas({
     ctx.fillRect(margin, y + 76, 350, 3);
     ctx.fillRect(margin + 450, y + 76, 200, 3);
 
-    // Scattered Exhibit 1 (Top Right)
-    if (loadedImages[2]) {
-      drawExhibit(rightEdge - 120, y + 80, loadedImages[2], 'EXH-C', 12, cPink, cGreen, 0.8);
-    }
-
 
     // ----- SECTION 3: DAW SPECTRUM ANALYZER (y: 360 -> 540) -----
     y += 120;
+    const eqY = y;
     const eqHeight = 180;
     
     ctx.fillStyle = cGreen;
@@ -256,14 +252,10 @@ export default function PosterCanvas({
     const barWidth = (innerWidth - 40) / numBars;
     
     for (let i = 0; i < numBars; i++) {
-      // Generate some dynamic looking eq data based on stats
       const energyFactor = (stats.avgEnergy || 50) / 100;
       const valenceFactor = (stats.avgValence || 50) / 100;
-      
-      // Math function to make it look like an audio spectrum
       const baseH = Math.sin(i * 0.4) * 40 + Math.cos(i * 0.8) * 20 + 50;
       const randomNoise = Math.random() * 30;
-      
       let h = baseH * energyFactor + randomNoise * valenceFactor + 20;
       if (h > eqHeight - 40) h = eqHeight - 40;
       if (h < 10) h = 10;
@@ -274,7 +266,7 @@ export default function PosterCanvas({
       ctx.fillStyle = cBlue;
       ctx.fillRect(bx + 4, by, barWidth - 8, h);
       ctx.fillStyle = cDark;
-      ctx.fillRect(bx + 4, by, barWidth - 8, 8); // Top cap of EQ bar
+      ctx.fillRect(bx + 4, by, barWidth - 8, 8);
     }
     
     ctx.fillStyle = cDark;
@@ -287,8 +279,8 @@ export default function PosterCanvas({
 
     // ----- SECTION 4: DIAGNOSIS BLOCK (y: 580 -> dynamic) -----
     y += eqHeight + 40;
+    const diagY = y;
     
-    // Dynamic Font Scaling for Archetype FIRST to determine block height
     const archetype = (roastData.archetype || 'WHIPLASH ENTHUSIAST').toUpperCase();
     let fontSize = 130;
     ctx.font = `${fontSize}px "Anton", sans-serif`;
@@ -324,10 +316,9 @@ export default function PosterCanvas({
     ctx.fillStyle = cDark;
     ctx.font = `${fontSize}px "Anton", sans-serif`;
     archetypeLines.forEach((line, i) => {
-      ctx.fillText(line, margin, y + 120 + i * lineSpacing); // adjusted y offset
+      ctx.fillText(line, margin, y + 120 + i * lineSpacing);
     });
 
-    // Stamp "CONFIRMED" - bounded to right edge safely
     ctx.save();
     ctx.translate(rightEdge - 160, y + (diagHeight / 2));
     ctx.rotate(-8 * Math.PI / 180);
@@ -346,6 +337,7 @@ export default function PosterCanvas({
 
     // ----- SECTION 5: CLINICAL NOTES (y: dynamic -> dynamic) -----
     y += diagHeight + 40;
+    const notesY = y;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillStyle = cGreen;
@@ -357,7 +349,8 @@ export default function PosterCanvas({
     ctx.font = 'bold 30px "Courier Prime", monospace';
     const maxNoteLines = 5;
     const rawNotes = roastData.roast || 'Patient exhibits symptoms of bad taste.';
-    let notesLines = wrapText(ctx, rawNotes, innerWidth - 60);
+    // Restrict notes width to leave room for Exhibit D on the right
+    let notesLines = wrapText(ctx, rawNotes, innerWidth - 280);
     
     if (notesLines.length > maxNoteLines) {
       notesLines = notesLines.slice(0, maxNoteLines);
@@ -382,15 +375,11 @@ export default function PosterCanvas({
       ctx.fillText(line, margin + 35, y + 25 + i * 45);
     });
 
-    // Scattered Exhibit 2 (Left edge, overlapping notes)
-    if (loadedImages[3]) {
-      drawExhibit(margin + 40, y + notesHeight, loadedImages[3], 'EXH-D', -14, cOrange, cPink, 0.7);
-    }
 
-
-    // ----- SECTION 6 & 7: VITALS & MAIN EXHIBITS -----
+    // ----- SECTION 6: VITALS -----
     y += notesHeight + 40;
-    const sharedHeight = 440; 
+    const vitalsY = y;
+    const sharedHeight = 340; 
     
     ctx.fillStyle = cPurple;
     ctx.fillRect(0, y, CANVAS_WIDTH, sharedHeight);
@@ -427,7 +416,6 @@ export default function PosterCanvas({
 
     rows.forEach((r, i) => {
       const ry = tableY + i * 80;
-      
       ctx.fillStyle = cDark;
       ctx.font = 'bold 20px "Courier Prime", monospace';
       ctx.fillText(r.label, margin + 20, ry + 30);
@@ -445,33 +433,18 @@ export default function PosterCanvas({
       });
     });
 
-    // Main Exhibits (Right aligned in the purple block)
-    if (loadedImages.length > 0) {
-      const exhX = rightEdge - 150;
-      const exhY = y + 160;
-      
-      // Label Box
-      ctx.save();
-      ctx.translate(exhX, exhY);
-      ctx.rotate(4 * Math.PI / 180);
-      ctx.fillStyle = cDark;
-      ctx.fillRect(-100, -130, 200, 36);
-      ctx.lineWidth = 4;
-      ctx.strokeRect(-100, -130, 200, 36);
-      ctx.fillStyle = cGreen;
-      ctx.font = 'bold 20px "Courier Prime", monospace';
-      ctx.fillText('EXHIBITS', -85, -122);
-      ctx.restore();
-
-      // Photo 1
-      if (loadedImages[0]) {
-        drawExhibit(exhX, exhY, loadedImages[0], 'EXH-A', -6, cOrange, cGreen, 1.0);
-      }
-      
-      // Photo 2
-      if (loadedImages[1]) {
-        drawExhibit(exhX + 40, exhY + 60, loadedImages[1], 'EXH-B', 5, cPink, cGreen, 1.0);
-      }
+    // ----- SECTION 7: SCATTERED EXHIBITS (Drawn on top of sections) -----
+    if (loadedImages[2]) { // Exhibit C: Over Spectrum
+      drawExhibit(rightEdge - 100, eqY + 80, loadedImages[2], 'EXH-C', 14, cPurple, cGreen, 0.7);
+    }
+    if (loadedImages[3]) { // Exhibit D: Over Notes (Right Side)
+      drawExhibit(rightEdge - 120, notesY + 120, loadedImages[3], 'EXH-D', -10, cBlue, cOrange, 0.75);
+    }
+    if (loadedImages[0]) { // Exhibit A: Over Vitals (Mid Right)
+      drawExhibit(rightEdge - 150, vitalsY + 140, loadedImages[0], 'EXH-A', -6, cOrange, cGreen, 0.9);
+    }
+    if (loadedImages[1]) { // Exhibit B: Over Vitals & Footer (Bottom Right)
+      drawExhibit(rightEdge - 80, vitalsY + 280, loadedImages[1], 'EXH-B', 8, cPink, cGreen, 0.95);
     }
 
 

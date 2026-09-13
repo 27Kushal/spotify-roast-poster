@@ -28,6 +28,16 @@ export default {
           muted: "#71717A",
           darkgreen: "#0B3818",
         },
+        // Exact Wrapped-Style Poster Color System
+        poster: {
+          blue: "#0047FF",
+          pink: "#FF007F",
+          green: "#CCFF00",
+          purple: "#5A189A",
+          orange: "#FF6D00",
+          dark: "#0F172A",
+          white: "#FFFFFF",
+        },
         spotify: {
           green: "#1DB954",
         },

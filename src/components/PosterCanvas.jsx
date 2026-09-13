@@ -123,6 +123,54 @@ export default function PosterCanvas({
     const innerWidth = CANVAS_WIDTH - margin * 2;
     const rightEdge = CANVAS_WIDTH - margin;
 
+    // ----- PRE-LOAD IMAGES (up to 4 for scattered exhibits) -----
+    const topTracksToUse = tracks.slice(0, 4);
+    const loadedImages = (
+      await Promise.all(
+        topTracksToUse.map((t) => {
+          const url = t.album?.images?.[1]?.url || t.album?.images?.[0]?.url;
+          return loadCorsImage(url);
+        })
+      )
+    );
+
+    // Helper for Exhibits
+    const drawExhibit = (exhX, exhY, img, label, rotDeg, bgColor, tapeColor, scale = 1) => {
+      if (!img) return;
+      ctx.save();
+      ctx.translate(exhX, exhY);
+      ctx.scale(scale, scale);
+      ctx.rotate(rotDeg * Math.PI / 180);
+      
+      // Polaroid backing
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(-100, -80, 200, 240);
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = cDark;
+      ctx.strokeRect(-100, -80, 200, 240);
+      
+      // Shadow behind image
+      ctx.fillStyle = cDark; 
+      ctx.fillRect(-85, -65, 170, 170);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(img, -85, -65, 170, 170);
+      ctx.strokeRect(-85, -65, 170, 170);
+      
+      ctx.fillStyle = cDark;
+      ctx.font = 'bold 22px "Courier Prime", monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(label, -80, 140);
+      
+      // Tape
+      ctx.fillStyle = tapeColor;
+      ctx.translate(0, -80);
+      ctx.rotate(8 * Math.PI / 180);
+      ctx.fillRect(-45, -15, 90, 30);
+      ctx.strokeRect(-45, -15, 90, 30);
+      
+      ctx.restore();
+    };
+
     // ----- SECTION 1: HEADER (y: 60 -> 190) -----
     let y = 60;
     ctx.textAlign = 'left';
@@ -161,95 +209,104 @@ export default function PosterCanvas({
     ctx.fillStyle = cGreen;
     ctx.font = 'bold 22px "Courier Prime", monospace';
     ctx.fillText('PATIENT NAME:', margin, y);
-    ctx.fillText('DOB / JOINED:', margin + 500, y);
+    ctx.fillText('DOB / JOINED:', margin + 450, y);
     
     ctx.fillStyle = cWhite;
     ctx.font = '32px "Courier Prime", monospace';
     const patientName = (user?.display_name || 'UNKNOWN PATIENT').toUpperCase();
-    // Truncate name if too long
-    const shortName = patientName.length > 20 ? patientName.substring(0, 18) + '...' : patientName;
+    const shortName = patientName.length > 18 ? patientName.substring(0, 16) + '...' : patientName;
     ctx.fillText(shortName, margin, y + 36);
-    ctx.fillText('2014-08', margin + 500, y + 36);
+    ctx.fillText('2014-08', margin + 450, y + 36);
     
     ctx.fillStyle = cWhite;
-    ctx.fillRect(margin, y + 76, 400, 3);
-    ctx.fillRect(margin + 500, y + 76, 250, 3);
+    ctx.fillRect(margin, y + 76, 350, 3);
+    ctx.fillRect(margin + 450, y + 76, 200, 3);
+
+    // Scattered Exhibit 1 (Top Right)
+    if (loadedImages[2]) {
+      drawExhibit(rightEdge - 120, y + 80, loadedImages[2], 'EXH-C', 12, cPink, cGreen, 0.8);
+    }
 
 
-    // ----- SECTION 3: ECG WAVEFORM (y: 360 -> 540) -----
+    // ----- SECTION 3: DAW SPECTRUM ANALYZER (y: 360 -> 540) -----
     y += 120;
-    const ecgHeight = 180;
+    const eqHeight = 180;
     
-    // Panel Background
     ctx.fillStyle = cGreen;
     ctx.beginPath();
-    ctx.roundRect(margin, y, innerWidth, ecgHeight, 16);
+    ctx.roundRect(margin, y, innerWidth, eqHeight, 16);
     ctx.fill();
-    // Border
     ctx.lineWidth = 5;
     ctx.strokeStyle = cDark;
     ctx.stroke();
-    // Shadow
     ctx.fillStyle = cPink;
     ctx.beginPath();
-    ctx.roundRect(margin + 12, y + 12, innerWidth, ecgHeight, 16);
+    ctx.roundRect(margin + 12, y + 12, innerWidth, eqHeight, 16);
     ctx.globalCompositeOperation = 'destination-over';
     ctx.fill();
     ctx.globalCompositeOperation = 'source-over';
 
-    // Grid Lines
     ctx.save();
     ctx.beginPath();
-    ctx.roundRect(margin, y, innerWidth, ecgHeight, 16);
+    ctx.roundRect(margin, y, innerWidth, eqHeight, 16);
     ctx.clip();
-    ctx.strokeStyle = 'rgba(15, 23, 42, 0.15)';
-    ctx.lineWidth = 2;
-    for(let i=1; i<4; i++) {
-      ctx.beginPath(); ctx.moveTo(margin, y + i * (ecgHeight/4)); ctx.lineTo(margin + innerWidth, y + i * (ecgHeight/4)); ctx.stroke();
-    }
-    for(let i=1; i<10; i++) {
-      ctx.beginPath(); ctx.moveTo(margin + i * (innerWidth/10), y); ctx.lineTo(margin + i * (innerWidth/10), y + ecgHeight); ctx.stroke();
+    
+    // Draw EQ Bars
+    const numBars = 32;
+    const barWidth = (innerWidth - 40) / numBars;
+    
+    for (let i = 0; i < numBars; i++) {
+      // Generate some dynamic looking eq data based on stats
+      const energyFactor = (stats.avgEnergy || 50) / 100;
+      const valenceFactor = (stats.avgValence || 50) / 100;
+      
+      // Math function to make it look like an audio spectrum
+      const baseH = Math.sin(i * 0.4) * 40 + Math.cos(i * 0.8) * 20 + 50;
+      const randomNoise = Math.random() * 30;
+      
+      let h = baseH * energyFactor + randomNoise * valenceFactor + 20;
+      if (h > eqHeight - 40) h = eqHeight - 40;
+      if (h < 10) h = 10;
+      
+      const bx = margin + 20 + (i * barWidth);
+      const by = y + eqHeight - 20 - h;
+      
+      ctx.fillStyle = cBlue;
+      ctx.fillRect(bx + 4, by, barWidth - 8, h);
+      ctx.fillStyle = cDark;
+      ctx.fillRect(bx + 4, by, barWidth - 8, 8); // Top cap of EQ bar
     }
     
     ctx.fillStyle = cDark;
-    ctx.globalAlpha = 0.8;
+    ctx.globalAlpha = 0.9;
     ctx.font = 'bold 24px "Courier Prime", monospace';
-    ctx.fillText('ECG // AUDIO VALENCE', margin + 20, y + 20);
+    ctx.fillText('SPECTRUM // AUDIO VIBE', margin + 20, y + 25);
     ctx.globalAlpha = 1.0;
-
-    // Line
-    ctx.strokeStyle = cBlue;
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(margin, y + ecgHeight/2);
-    const points = [
-      [50, 0], [60, -30], [70, 50], [85, -50], [100, 0], [250, 0], 
-      [260, -60], [275, 60], [290, -10], [310, 0], [450, 0], [460, -10], 
-      [470, -40], [485, 70], [500, -60], [515, 20], [530, 0], [700, 0], 
-      [710, -50], [730, 50], [745, -20], [760, 0], [920, 0]
-    ];
-    let cx = margin;
-    let cy = y + ecgHeight/2;
-    points.forEach(pt => {
-      cx = margin + pt[0] * (innerWidth / 920);
-      let pY = cy + pt[1];
-      ctx.lineTo(cx, pY);
-    });
-    ctx.lineTo(margin + innerWidth, cy);
-    ctx.stroke();
     ctx.restore();
 
 
-    // ----- SECTION 4: DIAGNOSIS BLOCK (y: 580 -> 880) -----
-    y += ecgHeight + 40;
-    const diagHeight = 300;
+    // ----- SECTION 4: DIAGNOSIS BLOCK (y: 580 -> dynamic) -----
+    y += eqHeight + 40;
+    
+    // Dynamic Font Scaling for Archetype FIRST to determine block height
+    const archetype = (roastData.archetype || 'WHIPLASH ENTHUSIAST').toUpperCase();
+    let fontSize = 130;
+    ctx.font = `${fontSize}px "Anton", sans-serif`;
+    let maxTextWidth = innerWidth - 80; 
+    let archetypeLines = wrapText(ctx, archetype, maxTextWidth);
+    
+    while (archetypeLines.length > 2 && fontSize > 60) {
+      fontSize -= 10;
+      ctx.font = `${fontSize}px "Anton", sans-serif`;
+      archetypeLines = wrapText(ctx, archetype, maxTextWidth);
+    }
+    
+    const lineSpacing = fontSize * 1.05;
+    const diagHeight = 160 + archetypeLines.length * lineSpacing;
     
     ctx.fillStyle = cPink;
     ctx.fillRect(0, y, CANVAS_WIDTH, diagHeight);
     
-    // Bottom border/shadow
     ctx.fillStyle = cPurple;
     ctx.fillRect(0, y + diagHeight, CANVAS_WIDTH, 16); 
     
@@ -264,28 +321,15 @@ export default function PosterCanvas({
     ctx.font = 'bold 28px "Courier Prime", monospace';
     ctx.fillText('PRIMARY DIAGNOSIS:', margin, y + 40);
     
-    // Dynamic Font Scaling for Archetype
-    const archetype = (roastData.archetype || 'WHIPLASH ENTHUSIAST').toUpperCase();
-    let fontSize = 130;
-    ctx.font = `${fontSize}px "Anton", sans-serif`;
-    let maxTextWidth = innerWidth - 100; // Leave room for stamp padding
-    let archetypeLines = wrapText(ctx, archetype, maxTextWidth);
-    
-    while (archetypeLines.length > 2 && fontSize > 60) {
-      fontSize -= 10;
-      ctx.font = `${fontSize}px "Anton", sans-serif`;
-      archetypeLines = wrapText(ctx, archetype, maxTextWidth);
-    }
-    
     ctx.fillStyle = cDark;
-    const lineSpacing = fontSize * 1.05;
+    ctx.font = `${fontSize}px "Anton", sans-serif`;
     archetypeLines.forEach((line, i) => {
-      ctx.fillText(line, margin, y + 140 + i * lineSpacing);
+      ctx.fillText(line, margin, y + 120 + i * lineSpacing); // adjusted y offset
     });
 
     // Stamp "CONFIRMED" - bounded to right edge safely
     ctx.save();
-    ctx.translate(rightEdge - 160, y + 150);
+    ctx.translate(rightEdge - 160, y + (diagHeight / 2));
     ctx.rotate(-8 * Math.PI / 180);
     ctx.strokeStyle = cGreen;
     ctx.lineWidth = 12;
@@ -300,7 +344,7 @@ export default function PosterCanvas({
     ctx.restore();
 
 
-    // ----- SECTION 5: CLINICAL NOTES (y: 920 -> dynamic) -----
+    // ----- SECTION 5: CLINICAL NOTES (y: dynamic -> dynamic) -----
     y += diagHeight + 40;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
@@ -310,7 +354,6 @@ export default function PosterCanvas({
 
     y += 45;
     
-    // Truncate notes to fit maximum 5 lines
     ctx.font = 'bold 30px "Courier Prime", monospace';
     const maxNoteLines = 5;
     const rawNotes = roastData.roast || 'Patient exhibits symptoms of bad taste.';
@@ -323,8 +366,7 @@ export default function PosterCanvas({
 
     const notesHeight = notesLines.length * 45 + 50;
     
-    // Notes Background Box
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.25)'; // cDark/25
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.25)'; 
     ctx.beginPath();
     ctx.roundRect(margin, y, innerWidth, notesHeight, 16);
     ctx.fill();
@@ -340,12 +382,16 @@ export default function PosterCanvas({
       ctx.fillText(line, margin + 35, y + 25 + i * 45);
     });
 
+    // Scattered Exhibit 2 (Left edge, overlapping notes)
+    if (loadedImages[3]) {
+      drawExhibit(margin + 40, y + notesHeight, loadedImages[3], 'EXH-D', -14, cOrange, cPink, 0.7);
+    }
 
-    // ----- SECTION 6 & 7: VITALS & EXHIBITS (Shared Y space) -----
+
+    // ----- SECTION 6 & 7: VITALS & MAIN EXHIBITS -----
     y += notesHeight + 40;
-    const sharedHeight = 440; // Plenty of room for both table and exhibits
+    const sharedHeight = 440; 
     
-    // Draw Purple Block for Vitals (Full bleed)
     ctx.fillStyle = cPurple;
     ctx.fillRect(0, y, CANVAS_WIDTH, sharedHeight);
     ctx.fillStyle = cGreen;
@@ -357,12 +403,10 @@ export default function PosterCanvas({
     ctx.moveTo(0, y + sharedHeight); ctx.lineTo(CANVAS_WIDTH, y + sharedHeight);
     ctx.stroke();
 
-    // Vitals Header
     ctx.fillStyle = cGreen;
     ctx.font = 'bold 28px "Courier Prime", monospace';
     ctx.fillText('VITAL SIGNS:', margin, y + 30);
 
-    // Vitals Table (Takes up ~65% of width)
     const tableY = y + 80;
     const tWidth = innerWidth * 0.65;
     
@@ -395,31 +439,20 @@ export default function PosterCanvas({
       ctx.fillRect(margin + tWidth*0.65, ry, tWidth*0.35, 80);
       ctx.fillStyle = r.text;
       ctx.font = 'italic bold 20px "Courier Prime", monospace';
-      // Wrap qual if needed
       const qualLines = wrapText(ctx, r.qual, tWidth*0.35 - 20);
       qualLines.forEach((ql, qi) => {
         ctx.fillText(ql, margin + tWidth*0.65 + 15, ry + (qualLines.length > 1 ? 16 : 28) + qi * 26);
       });
     });
 
-    // Exhibits (Right aligned in the purple block)
-    const topTracksToUse = tracks.slice(0, 2);
-    const loadedImages = (
-      await Promise.all(
-        topTracksToUse.map((t) => {
-          const url = t.album?.images?.[1]?.url || t.album?.images?.[0]?.url;
-          return loadCorsImage(url);
-        })
-      )
-    ).filter(Boolean);
-
+    // Main Exhibits (Right aligned in the purple block)
     if (loadedImages.length > 0) {
       const exhX = rightEdge - 150;
       const exhY = y + 160;
+      
+      // Label Box
       ctx.save();
       ctx.translate(exhX, exhY);
-      
-      // Label
       ctx.rotate(4 * Math.PI / 180);
       ctx.fillStyle = cDark;
       ctx.fillRect(-100, -130, 200, 36);
@@ -428,65 +461,21 @@ export default function PosterCanvas({
       ctx.fillStyle = cGreen;
       ctx.font = 'bold 20px "Courier Prime", monospace';
       ctx.fillText('EXHIBITS', -85, -122);
-      ctx.rotate(-4 * Math.PI / 180);
+      ctx.restore();
 
       // Photo 1
-      ctx.rotate(-6 * Math.PI / 180);
-      ctx.fillStyle = cOrange;
-      ctx.fillRect(-100, -70, 200, 230);
-      ctx.lineWidth = 6;
-      ctx.strokeRect(-100, -70, 200, 230);
+      if (loadedImages[0]) {
+        drawExhibit(exhX, exhY, loadedImages[0], 'EXH-A', -6, cOrange, cGreen, 1.0);
+      }
       
-      // Shadow behind image
-      ctx.fillStyle = cDark; 
-      ctx.fillRect(-85, -55, 170, 170);
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.drawImage(loadedImages[0], -85, -55, 170, 170);
-      ctx.strokeRect(-85, -55, 170, 170);
-      
-      ctx.font = 'bold 20px "Courier Prime", monospace';
-      ctx.fillText('EXH-A', -70, 130);
-      
-      // Tape
-      ctx.fillStyle = cGreen;
-      ctx.translate(0, -70);
-      ctx.rotate(8 * Math.PI / 180);
-      ctx.fillRect(-35, -12, 70, 24);
-      ctx.strokeRect(-35, -12, 70, 24);
-      ctx.rotate(-8 * Math.PI / 180);
-      ctx.translate(0, 70);
-      ctx.rotate(6 * Math.PI / 180);
-
       // Photo 2
       if (loadedImages[1]) {
-        ctx.translate(40, 60); // overlap
-        ctx.rotate(5 * Math.PI / 180);
-        ctx.fillStyle = cPink;
-        ctx.fillRect(-100, -70, 200, 230);
-        ctx.lineWidth = 6;
-        ctx.strokeRect(-100, -70, 200, 230);
-        
-        ctx.fillStyle = cDark;
-        ctx.fillRect(-85, -55, 170, 170);
-        ctx.drawImage(loadedImages[1], -85, -55, 170, 170);
-        ctx.strokeRect(-85, -55, 170, 170);
-        
-        ctx.font = 'bold 20px "Courier Prime", monospace';
-        ctx.fillText('EXH-B', -70, 130);
-        
-        // Tape
-        ctx.fillStyle = cGreen;
-        ctx.translate(0, -70);
-        ctx.rotate(-5 * Math.PI / 180);
-        ctx.fillRect(-35, -12, 70, 24);
-        ctx.strokeRect(-35, -12, 70, 24);
+        drawExhibit(exhX + 40, exhY + 60, loadedImages[1], 'EXH-B', 5, cPink, cGreen, 1.0);
       }
-      ctx.restore();
     }
 
 
     // ----- SECTION 8: FOOTER (y: 1740) -----
-    // Fixed firmly at bottom to avoid overlap
     const footerY = 1720;
     
     ctx.fillStyle = cGreen;

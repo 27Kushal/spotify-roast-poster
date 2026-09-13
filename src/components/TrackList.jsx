@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogOut, ExternalLink, Activity, Radio, BarChart3, Disc, Music } from 'lucide-react';
+import { LogOut, ExternalLink, Activity, Radio, BarChart3, Disc, Music, Sparkles } from 'lucide-react';
 import RoastCard from './RoastCard';
 import PosterCanvas from './PosterCanvas';
 import ThreeVisualizer from './ThreeVisualizer';
@@ -17,35 +17,44 @@ export default function TrackList({
   onProceedToPoster,
   onLogout,
 }) {
+  const pathologyTags = [
+    { text: 'ACUTE NOSTALGIA', color: 'bg-zine-orange text-white border-black' },
+    { text: '3AM SPIRALING', color: 'bg-zine-pink text-white border-black' },
+    { text: 'HEAVY COPING', color: 'bg-zine-cyan text-black border-black' },
+    { text: 'DISSOCIATION', color: 'bg-zine-purple text-white border-black' },
+    { text: 'MAIN CHARACTER', color: 'bg-zine-lime text-black border-black' },
+    { text: 'INDIE HYPOCRISY', color: 'bg-zine-yellow text-black border-black' },
+  ];
+
   return (
     <div className="min-h-screen bg-zine-cream text-zine-black font-body selection:bg-zine-pink selection:text-white pb-32 relative">
       
       {/* 1. TOP NAVBAR */}
-      <header className="sticky top-0 z-40 bg-white border-b-2 border-zine-black px-4 sm:px-8 py-3 shadow-sm">
+      <header className="sticky top-0 z-40 bg-white border-b-3 border-zine-black px-4 sm:px-8 py-3 shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           
           <div className="flex items-center gap-3">
-            <div className="border-2 border-zine-black p-0.5 bg-white shadow-brutal-sm">
-              <div className="border border-zine-black px-2.5 py-0.5 bg-zine-lime text-zine-black font-headline text-lg tracking-wider">
-                SONIC MIRROR
+            <div className="border-2 border-zine-black p-0.5 bg-zine-yellow shadow-brutal-sm">
+              <div className="border border-zine-black px-3 py-1 bg-zine-lime text-zine-black font-headline text-lg tracking-wider">
+                SONIC MIRROR 🪞
               </div>
             </div>
-            <div className="hidden sm:flex items-center gap-2 border border-zine-black px-2 py-0.5 font-mono text-[11px] bg-zinc-100">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <div className="hidden sm:flex items-center gap-2 border-2 border-zine-black px-2.5 py-1 font-mono text-[11px] bg-zine-cyan text-black font-bold shadow-brutal-sm">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
               <span>ACTIVE BIOPSY RUN</span>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
             {user && (
-              <div className="hidden md:flex items-center gap-2 border border-zine-black px-3 py-1 font-mono text-xs bg-white">
-                <span className="text-zinc-400">PATIENT:</span>
-                <span className="font-bold text-black uppercase">{user.display_name}</span>
+              <div className="hidden md:flex items-center gap-2 border-2 border-zine-black px-3 py-1 font-mono text-xs bg-zine-cream shadow-brutal-sm">
+                <span className="text-zinc-500 font-bold">PATIENT:</span>
+                <span className="font-headline text-sm uppercase text-black">{user.display_name}</span>
               </div>
             )}
             <button
               onClick={onLogout}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-zine-black bg-white hover:bg-zinc-100 font-mono text-xs font-bold uppercase tracking-wider transition-all shadow-brutal-sm hover:translate-x-0.5 hover:translate-y-0.5"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 border-2 border-zine-black bg-white hover:bg-zinc-100 font-mono text-xs font-bold uppercase tracking-wider transition-all shadow-brutal-sm hover:translate-x-0.5 hover:translate-y-0.5"
             >
               <LogOut className="w-3.5 h-3.5 text-red-500" />
               <span>DISCONNECT</span>
@@ -60,157 +69,180 @@ export default function TrackList({
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* LEFT COLUMN: 3D SCOPE & TELEMETRY GAUGES & TRACK BIOPSY */}
+          {/* LEFT COLUMN: 3D SCOPE & COLORFUL TELEMETRY GAUGES & TRACK BIOPSY */}
           <div className="lg:col-span-6 flex flex-col gap-6">
             
             {/* Scope 01: Three.js Real-Time Psychoacoustic Resonator */}
-            <div className="border-3 border-zine-black bg-white p-4 sm:p-5 shadow-brutal">
+            <div className="border-4 border-zine-black bg-white p-4 sm:p-5 shadow-brutal">
               
-              <div className="flex items-center justify-between border-b-2 border-zine-black pb-3 mb-3">
+              <div className="flex items-center justify-between border-b-3 border-zine-black pb-3 mb-3">
                 <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider">
                   <Activity className="w-4 h-4 text-zine-pink" />
-                  <span>SCOPE 01: REAL-TIME PSYCHOACOUSTIC RESONATOR</span>
+                  <span>SCOPE 01: REAL-TIME 3D AUDIO RESONATOR</span>
                 </div>
-                <span className="font-mono text-[10px] bg-red-600 text-white px-1.5 py-0.5 uppercase">
-                  LIVE
-                </span>
+                <div className="flex items-center gap-1 bg-red-600 border border-black text-white font-mono text-[10px] font-bold px-2 py-0.5 uppercase shadow-brutal-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                  <span>LIVE</span>
+                </div>
               </div>
 
-              {/* 3D Waveform Container */}
-              <div className="w-full h-64 bg-zinc-950 border-2 border-zine-black relative overflow-hidden shadow-inner">
+              {/* 3D Multi-Chromatic Waveform Container */}
+              <div className="w-full h-64 bg-zinc-950 border-3 border-zine-black relative overflow-hidden shadow-inner">
                 {/* Embedded Three.js Resonator Wave Terrain */}
                 <ThreeVisualizer mode="resonator" stats={stats} className="w-full h-full" />
 
-                {/* Scope Telemetry Overlay */}
-                <div className="absolute top-2 left-3 font-mono text-[10px] text-zine-lime bg-black/70 px-2 py-0.5 border border-zine-lime/40">
+                {/* Scope Telemetry Overlay with Fun Color Tags */}
+                <div className="absolute top-2 left-3 font-mono text-[10px] font-bold text-black bg-zine-lime px-2 py-0.5 border border-black shadow-brutal-sm">
                   FREQ: {((stats?.avgTempo || 120) * 18.2).toFixed(1)}Hz // 3D TERRAIN
                 </div>
-                <div className="absolute top-2 right-3 font-mono text-[10px] text-zine-pink bg-black/70 px-2 py-0.5 border border-zine-pink/40">
+                <div className="absolute top-2 right-3 font-mono text-[10px] font-bold text-white bg-zine-pink px-2 py-0.5 border border-black shadow-brutal-sm">
                   ENERGY: {stats?.avgEnergy}%
                 </div>
-                <div className="absolute bottom-2 left-3 font-mono text-[10px] text-zine-cyan bg-black/70 px-2 py-0.5 border border-zine-cyan/40">
+                <div className="absolute bottom-2 left-3 font-mono text-[10px] font-bold text-black bg-zine-cyan px-2 py-0.5 border border-black shadow-brutal-sm">
                   CH: STEREO PHASE MATRIX
                 </div>
-                <div className="absolute bottom-2 right-3 font-mono text-[10px] text-white/70 bg-black/70 px-2 py-0.5 border border-white/30">
+                <div className="absolute bottom-2 right-3 font-mono text-[10px] font-bold text-black bg-zine-yellow px-2 py-0.5 border border-black shadow-brutal-sm">
                   VALENCE: {stats?.avgValence}%
                 </div>
               </div>
 
-              <div className="mt-3 font-mono text-[11px] text-zinc-600 flex justify-between">
-                <span>INTERACTIVE THREE.JS WAVEFORM</span>
-                <span>DRIVEN BY YOUR AUDIO METRICS</span>
+              <div className="mt-3 font-mono text-[11px] text-zinc-700 font-bold flex justify-between">
+                <span className="flex items-center gap-1 text-zine-purple">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>INTERACTIVE 3D WAVEFORM</span>
+                </span>
+                <span className="text-zinc-500">LIVE AUDIO FEATURE SYNTHESIS</span>
               </div>
             </div>
 
-            {/* Vital Signs & Psychoacoustic Telemetry Gauges */}
+            {/* Vital Signs & Psychoacoustic Telemetry Gauges with Bold Pop Colors */}
             {stats && (
-              <div className="border-3 border-zine-black bg-white p-5 shadow-brutal">
-                <div className="flex items-center justify-between border-b-2 border-zine-black pb-2 mb-4 font-mono text-xs font-bold uppercase tracking-wider">
+              <div className="border-4 border-zine-black bg-white p-5 sm:p-6 shadow-brutal-lime">
+                <div className="flex items-center justify-between border-b-3 border-zine-black pb-2 mb-4 font-mono text-xs font-bold uppercase tracking-wider">
                   <div className="flex items-center gap-1.5">
-                    <BarChart3 className="w-4 h-4 text-zine-lime" />
-                    <span>VITAL SIGNS & PSYCHOLOGICAL METRICS</span>
+                    <BarChart3 className="w-4 h-4 text-black" />
+                    <span>VITAL SIGNS & ACOUSTIC METRICS</span>
                   </div>
-                  <span className="text-zinc-400">TELEMETRY</span>
+                  <span className="bg-zine-yellow border border-black text-black text-[10px] px-2 py-0.5">5 TELEMETRIES</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3.5">
                   
-                  {/* Gauge 1: Valence */}
-                  <div className="border-2 border-zinc-300 p-3 bg-zinc-50">
+                  {/* Gauge 1: Valence (Cyan) */}
+                  <div className="border-3 border-zine-black p-3.5 bg-zine-cyan text-black shadow-brutal-sm hover:-translate-y-0.5 transition-transform">
                     <div className="flex justify-between items-end mb-1">
-                      <span className="font-mono text-[11px] font-bold text-zinc-600 uppercase">VALENCE</span>
-                      <span className="font-headline text-2xl text-black leading-none">{stats.avgValence}%</span>
+                      <span className="font-mono text-[11px] font-bold uppercase">VALENCE (HAPPINESS)</span>
+                      <span className="font-headline text-3xl leading-none">{stats.avgValence}%</span>
                     </div>
-                    <div className="w-full h-3 bg-zinc-200 border border-black overflow-hidden flex">
+                    <div className="w-full h-3.5 bg-white border-2 border-black overflow-hidden flex">
                       <div
-                        className="h-full bg-zine-cyan border-r border-black transition-all duration-700"
+                        className="h-full bg-black transition-all duration-700"
                         style={{ width: `${stats.avgValence}%` }}
                       ></div>
                     </div>
-                    <div className="font-mono text-[9px] text-zinc-500 uppercase mt-1">
+                    <div className="font-mono text-[10px] font-bold uppercase mt-1.5">
                       {stats.avgValence < 40 ? 'CRITICAL MELANCHOLIA' : 'ELEVATED EUPHORIA'}
                     </div>
                   </div>
 
-                  {/* Gauge 2: Energy */}
-                  <div className="border-2 border-zinc-300 p-3 bg-zinc-50">
+                  {/* Gauge 2: Energy (Lime) */}
+                  <div className="border-3 border-zine-black p-3.5 bg-zine-lime text-black shadow-brutal-sm hover:-translate-y-0.5 transition-transform">
                     <div className="flex justify-between items-end mb-1">
-                      <span className="font-mono text-[11px] font-bold text-zinc-600 uppercase">ENERGY</span>
-                      <span className="font-headline text-2xl text-black leading-none">{stats.avgEnergy}%</span>
+                      <span className="font-mono text-[11px] font-bold uppercase">ENERGY LEVEL</span>
+                      <span className="font-headline text-3xl leading-none">{stats.avgEnergy}%</span>
                     </div>
-                    <div className="w-full h-3 bg-zinc-200 border border-black overflow-hidden flex">
+                    <div className="w-full h-3.5 bg-white border-2 border-black overflow-hidden flex">
                       <div
-                        className="h-full bg-zine-lime border-r border-black transition-all duration-700"
+                        className="h-full bg-black transition-all duration-700"
                         style={{ width: `${stats.avgEnergy}%` }}
                       ></div>
                     </div>
-                    <div className="font-mono text-[9px] text-zinc-500 uppercase mt-1">
+                    <div className="font-mono text-[10px] font-bold uppercase mt-1.5">
                       {stats.avgEnergy > 70 ? 'MANIC OVERDRIVE' : 'LOW AROUSAL FATIGUE'}
                     </div>
                   </div>
 
-                  {/* Gauge 3: Tempo */}
-                  <div className="border-2 border-zinc-300 p-3 bg-zinc-50">
+                  {/* Gauge 3: Tempo (Solar Orange) */}
+                  <div className="border-3 border-zine-black p-3.5 bg-zine-orange text-white shadow-brutal-sm hover:-translate-y-0.5 transition-transform">
                     <div className="flex justify-between items-end mb-1">
-                      <span className="font-mono text-[11px] font-bold text-zinc-600 uppercase">TEMPO (BPM)</span>
-                      <span className="font-headline text-2xl text-black leading-none">{stats.avgTempo}</span>
+                      <span className="font-mono text-[11px] font-bold uppercase">TEMPO (BPM)</span>
+                      <span className="font-headline text-3xl leading-none">{stats.avgTempo}</span>
                     </div>
-                    <div className="w-full h-3 bg-zinc-200 border border-black overflow-hidden flex">
+                    <div className="w-full h-3.5 bg-white border-2 border-black overflow-hidden flex">
                       <div
-                        className="h-full bg-amber-400 border-r border-black transition-all duration-700"
+                        className="h-full bg-black transition-all duration-700"
                         style={{ width: `${Math.min(100, (stats.avgTempo / 180) * 100)}%` }}
                       ></div>
                     </div>
-                    <div className="font-mono text-[9px] text-zinc-500 uppercase mt-1">
+                    <div className="font-mono text-[10px] font-bold uppercase mt-1.5 text-white/90">
                       HEART RATE EQUIVALENT
                     </div>
                   </div>
 
-                  {/* Gauge 4: Dissonance / Dissociation */}
-                  <div className="border-2 border-zinc-300 p-3 bg-zinc-50">
+                  {/* Gauge 4: Dissonance (Electric Violet) */}
+                  <div className="border-3 border-zine-black p-3.5 bg-zine-purple text-white shadow-brutal-sm hover:-translate-y-0.5 transition-transform">
                     <div className="flex justify-between items-end mb-1">
-                      <span className="font-mono text-[11px] font-bold text-zinc-600 uppercase">DISSONANCE</span>
-                      <span className="font-headline text-2xl text-zine-pink leading-none">
+                      <span className="font-mono text-[11px] font-bold uppercase">DISSONANCE</span>
+                      <span className="font-headline text-3xl leading-none">
                         {Math.max(10, 100 - stats.avgValence)}%
                       </span>
                     </div>
-                    <div className="w-full h-3 bg-zinc-200 border border-black overflow-hidden flex">
+                    <div className="w-full h-3.5 bg-white border-2 border-black overflow-hidden flex">
                       <div
-                        className="h-full bg-zine-pink border-r border-black transition-all duration-700"
+                        className="h-full bg-zine-lime transition-all duration-700"
                         style={{ width: `${Math.max(10, 100 - stats.avgValence)}%` }}
                       ></div>
                     </div>
-                    <div className="font-mono text-[9px] text-zinc-500 uppercase mt-1">
+                    <div className="font-mono text-[10px] font-bold uppercase mt-1.5 text-white/90">
                       EMOTIONAL CONFLICT INDEX
                     </div>
                   </div>
 
                 </div>
+
+                {/* Genre & Mainstream Ribbon */}
+                <div className="mt-3.5 pt-3 border-t-2 border-dashed border-zinc-300 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 font-mono text-xs">
+                    <span className="font-bold text-zinc-500 uppercase">DOMINANT GENRE:</span>
+                    <span className="bg-zine-yellow border-2 border-black px-2 py-0.5 font-headline text-sm uppercase shadow-brutal-sm">
+                      {stats.dominantGenre || 'Indie / Alt'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 font-mono text-xs">
+                    <span className="font-bold text-zinc-500 uppercase">MAINSTREAM SCORE:</span>
+                    <span className="bg-zine-pink text-white border-2 border-black px-2 py-0.5 font-headline text-sm uppercase shadow-brutal-sm">
+                      {stats.avgPopularity}%
+                    </span>
+                  </div>
+                </div>
+
               </div>
             )}
 
             {/* Stream Input: Detected (Top Tracks Specimen List) */}
-            <div className="border-3 border-zine-black bg-white p-5 shadow-brutal">
-              <div className="flex items-center justify-between border-b-2 border-zine-black pb-3 mb-3">
+            <div className="border-4 border-zine-black bg-white p-5 shadow-brutal">
+              <div className="flex items-center justify-between border-b-3 border-zine-black pb-3 mb-3">
                 <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider">
                   <Radio className="w-4 h-4 text-black" />
                   <span>STREAM INPUT: DETECTED ROTATION</span>
                 </div>
-                <span className="font-mono text-[11px] text-zinc-500 uppercase">
+                <span className="font-mono text-xs bg-zinc-100 border border-black px-2 py-0.5 font-bold uppercase">
                   {tracks.length} SPECIMENS
                 </span>
               </div>
 
-              <div className="flex flex-col divide-y divide-zinc-200 max-h-[420px] overflow-y-auto pr-1">
+              <div className="flex flex-col divide-y-2 divide-zinc-200 max-h-[440px] overflow-y-auto pr-1">
                 {tracks.map((track, idx) => {
                   const albumCover = track.album?.images?.[2]?.url || track.album?.images?.[1]?.url;
+                  const tag = pathologyTags[idx % pathologyTags.length];
+
                   return (
                     <div
                       key={track.id || idx}
-                      className="group flex items-center justify-between py-2.5 hover:bg-zinc-50 px-2 transition-colors"
+                      className="group flex items-center justify-between py-2.5 hover:bg-zine-yellow/20 px-2 transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <span className="font-mono text-xs font-bold text-zinc-400 w-5 shrink-0">
+                        <span className="font-mono text-xs font-bold text-zinc-400 w-6 shrink-0 group-hover:text-black">
                           {(idx + 1).toString().padStart(2, '0')}
                         </span>
 
@@ -218,30 +250,30 @@ export default function TrackList({
                           <img
                             src={albumCover}
                             alt={track.name}
-                            className="w-9 h-9 object-cover border border-black shrink-0"
+                            className="w-10 h-10 object-cover border-2 border-black shrink-0 shadow-brutal-sm"
                           />
                         )}
 
                         <div className="min-w-0 pr-2">
-                          <p className="font-bold text-xs sm:text-sm text-black truncate leading-tight">
+                          <p className="font-headline text-sm text-black truncate leading-tight tracking-wide">
                             {track.name}
                           </p>
-                          <p className="font-mono text-[10px] text-zinc-500 truncate uppercase">
+                          <p className="font-mono text-[10px] text-zinc-600 truncate uppercase font-medium">
                             {track.artists?.map((a) => a.name).join(', ')}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className="font-mono text-[10px] bg-zinc-100 border border-zinc-300 px-1.5 py-0.5 text-zinc-600 hidden sm:inline">
-                          {(idx % 3 === 0 ? 'ACUTE NOSTALGIA' : idx % 2 === 0 ? 'SPIRALING' : 'HEAVY COPING')}
+                        <span className={`font-mono text-[10px] font-bold border-2 px-2 py-0.5 shadow-brutal-sm hidden sm:inline ${tag.color}`}>
+                          {tag.text}
                         </span>
                         {track.external_urls?.spotify && (
                           <a
                             href={track.external_urls.spotify}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-zinc-400 hover:text-black transition-colors"
+                            className="border-2 border-black p-1 bg-white hover:bg-zine-lime text-black transition-colors shadow-brutal-sm"
                             title="Open in Spotify"
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
@@ -273,13 +305,18 @@ export default function TrackList({
         {/* SECTION 3: RISOGRAPH POSTER STUDIO */}
         {roastData && (
           <section id="poster-section" className="mt-16 pt-12 border-t-4 border-zine-black">
-            <div className="mb-8">
-              <div className="border border-zine-black bg-white px-2.5 py-0.5 font-mono text-xs font-bold uppercase tracking-wider inline-block mb-2 shadow-brutal-sm">
-                FINAL OUTPUT // STAGE 3
+            <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <div className="border-2 border-zine-black bg-zine-pink text-white px-3 py-1 font-mono text-xs font-bold uppercase tracking-wider inline-block mb-2 shadow-brutal-sm">
+                  FINAL OUTPUT // STAGE 3
+                </div>
+                <h2 className="font-headline text-4xl sm:text-5xl uppercase tracking-tight text-zine-black">
+                  DIAGNOSTIC POSTER CUSTOMIZATION & EXPORT
+                </h2>
               </div>
-              <h2 className="font-headline text-4xl sm:text-5xl uppercase tracking-tight text-zine-black">
-                DIAGNOSTIC POSTER CUSTOMIZATION & EXPORT
-              </h2>
+              <span className="font-mono text-xs bg-zine-yellow border-2 border-black px-2.5 py-1 text-black font-bold uppercase shadow-brutal-sm">
+                1080x1920 (9:16)
+              </span>
             </div>
 
             <PosterCanvas

@@ -13,14 +13,33 @@ export default {
         "cyan-noise": "#00E5FF",
         "sleeve-white": "#EFEFEF",
         "static-grey": "#4A4A52",
-        // Keep spotify colors if needed for icons, etc., but mostly rely on the new palette
+        // Stitch Neo-Brutalist Y2K Zine Colors
+        zine: {
+          cream: "#F4F4F0",
+          lime: "#D4FF00",
+          pink: "#FF007A",
+          cyan: "#00F0FF",
+          black: "#111111",
+          card: "#FFFFFF",
+          muted: "#71717A",
+          darkgreen: "#0B3818",
+        },
         spotify: {
           green: "#1DB954",
         },
       },
+      boxShadow: {
+        brutal: "4px 4px 0px #111111",
+        "brutal-sm": "2px 2px 0px #111111",
+        "brutal-lg": "8px 8px 0px #111111",
+        "brutal-lime": "4px 4px 0px #D4FF00",
+        "brutal-pink": "4px 4px 0px #FF007A",
+      },
       fontFamily: {
-        display: ['"League Gothic"', 'sans-serif'],
+        headline: ['"Archivo Black"', '"Space Grotesk"', 'sans-serif'],
+        display: ['"Archivo Black"', '"League Gothic"', 'sans-serif'],
         body: ['"Space Grotesk"', 'sans-serif'],
+        mono: ['"Space Mono"', '"Courier Prime"', 'monospace'],
       },
       keyframes: {
         float: {

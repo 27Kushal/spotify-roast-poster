@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Disc } from 'lucide-react';
+import { Activity, RefreshCw } from 'lucide-react';
 
 const WITTY_MESSAGES = [
-  'Consulting the algorithmic music gods...',
-  'Analyzing your questionable 2:00 AM listening habits...',
-  'Calculating exact percentage of sad-girl indie energy...',
-  'Cross-referencing your top tracks with universal shame indexes...',
-  'Calibrating roast spiciness...',
-  'Extracting album art hex palettes...',
-  'Preparing your sonic indictment...',
+  'EXTRACTING 3AM ACOUSTIC CO-FACTORS...',
+  'CALCULATING EXACT VALENCE-TO-VALIDITY DEFICIT...',
+  'CROSS-REFERENCING TOP TRACKS WITH DSM-5 LISTENER NEUROSES...',
+  'CALIBRATING ROAST SPICINESS LEVEL...',
+  'ISOLATING UNRESOLVED INDIE NOSTALGIA...',
+  'PREPARING PSYCHOACOUSTIC AUTOPSY POSTER...',
 ];
 
 export default function LoadingState({ customMessage }) {
@@ -24,47 +23,50 @@ export default function LoadingState({ customMessage }) {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
-      {/* Spinning holographic vinyl disc animation */}
-      <div className="relative mb-8">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#111] via-[#1a1a24] to-[#0a0a0f] border-2 border-white/20 shadow-2xl flex items-center justify-center animate-spin" style={{ animationDuration: '4s' }}>
-          {/* Vinyl grooves */}
-          <div className="w-16 h-16 rounded-full border border-white/10 flex items-center justify-center">
-            <div className="w-10 h-10 rounded-full bg-spotify-green/20 border border-spotify-green flex items-center justify-center">
-              <div className="w-3 h-3 rounded-full bg-white/80" />
-            </div>
+      
+      {/* Neo-brutalist Loading Container */}
+      <div className="border-4 border-zine-black bg-white p-8 shadow-brutal max-w-md w-full mb-6">
+        
+        <div className="flex justify-between items-center border-b-2 border-zine-black pb-3 mb-6 font-mono text-xs font-bold uppercase">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+            <span>TELEMETRY ACQUISITION</span>
+          </div>
+          <span className="bg-zine-lime border border-black px-1.5 py-0.5 text-black">
+            STAGE 01/03
+          </span>
+        </div>
+
+        {/* Spinning Box Loader */}
+        <div className="flex justify-center mb-6">
+          <div className="w-20 h-20 border-4 border-zine-black bg-zine-lime flex items-center justify-center shadow-brutal animate-spin" style={{ animationDuration: '3s' }}>
+            <Activity className="w-10 h-10 text-black animate-pulse" />
           </div>
         </div>
 
-        {/* Ambient glow behind vinyl */}
-        <div className="absolute inset-0 bg-spotify-green/30 rounded-full blur-xl animate-pulse" />
+        {/* Equalizer segmented bars */}
+        <div className="flex items-end justify-center gap-2 h-10 mb-6">
+          {[35, 75, 100, 60, 90, 45, 80, 55].map((height, i) => (
+            <span
+              key={i}
+              className="w-3 bg-zine-pink border border-black transition-all duration-300"
+              style={{
+                height: `${height}%`,
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="border-2 border-zine-black bg-zine-cream p-4 font-mono text-xs sm:text-sm font-bold text-black uppercase tracking-wider leading-relaxed">
+          {customMessage || WITTY_MESSAGES[msgIndex]}
+        </div>
+
       </div>
 
-      {/* Equalizer animation */}
-      <div className="flex items-end justify-center gap-1.5 h-10 mb-6">
-        {[40, 75, 100, 60, 85, 45, 90, 65, 30].map((height, i) => (
-          <span
-            key={i}
-            className="w-1.5 bg-gradient-to-t from-spotify-green via-emerald-300 to-teal-200 rounded-full animate-pulse"
-            style={{
-              height: `${height}%`,
-              animationDelay: `${i * 120}ms`,
-              animationDuration: '0.9s',
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full bg-spotify-green/10 border border-spotify-green/30 text-spotify-green text-xs font-mono font-bold tracking-widest uppercase">
-        <Sparkles className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '3s' }} />
-        <span>SONIC MIRROR AI ENGINE</span>
-      </div>
-
-      <h3 className="text-2xl sm:text-3xl font-black text-white font-syne max-w-lg transition-all duration-300">
-        {customMessage || WITTY_MESSAGES[msgIndex]}
-      </h3>
-      <p className="text-xs font-mono text-zinc-500 mt-2 tracking-wide">
-        PROCESSING SPOTIFY METRICS IN YOUR BROWSER
+      <p className="font-mono text-xs text-zinc-500 uppercase tracking-widest">
+        SECURE IN-BROWSER PSYCHOACOUSTIC EVALUATION // SONIC MIRROR 2026
       </p>
+
     </div>
   );
 }

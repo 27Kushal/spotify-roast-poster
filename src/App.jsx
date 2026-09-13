@@ -71,8 +71,8 @@ export default function App() {
   // 2. Loading Spotify Data
   if (isAuthenticated && isDataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-spotify-black">
-        <LoadingState customMessage="Fetching your top tracks and computing taste metrics..." />
+      <div className="min-h-screen flex items-center justify-center bg-zine-cream text-zine-black font-body">
+        <LoadingState customMessage="Fetching top tracks and executing clinical evaluation..." />
       </div>
     );
   }
@@ -80,26 +80,26 @@ export default function App() {
   // 3. Error State
   if (dataError) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-spotify-black text-white">
-        <div className="max-w-md w-full p-8 rounded-2xl bg-spotify-dark border border-red-500/30 text-center">
-          <div className="w-12 h-12 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle className="w-6 h-6" />
+      <div className="min-h-screen flex items-center justify-center p-6 bg-zine-cream text-zine-black font-body">
+        <div className="max-w-md w-full p-8 border-4 border-zine-black bg-white shadow-brutal text-center">
+          <div className="w-14 h-14 border-2 border-zine-black bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 shadow-brutal-sm">
+            <AlertTriangle className="w-8 h-8" />
           </div>
-          <h2 className="text-xl font-bold mb-2">Error Loading Spotify Data</h2>
-          <p className="text-sm text-spotify-subtext mb-6">{dataError}</p>
+          <h2 className="font-headline text-2xl uppercase tracking-wider mb-2">TELEMETRY ERROR</h2>
+          <p className="font-mono text-xs text-zinc-600 mb-6">{dataError}</p>
           <div className="flex justify-center gap-3">
             <button
               onClick={refetch}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-spotify-green text-black font-semibold text-sm hover:bg-[#1ed760] transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 border-2 border-zine-black bg-zine-lime text-black font-headline text-sm uppercase tracking-wider shadow-brutal-sm hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
             >
               <RefreshCw className="w-4 h-4" />
-              <span>Retry</span>
+              <span>RETRY</span>
             </button>
             <button
               onClick={logout}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-medium text-sm transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 border-2 border-zine-black bg-white hover:bg-zinc-100 text-black font-headline text-sm uppercase tracking-wider shadow-brutal-sm hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
             >
-              <span>Log out</span>
+              <span>LOGOUT</span>
             </button>
           </div>
         </div>

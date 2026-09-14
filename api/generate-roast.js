@@ -94,7 +94,13 @@ CRITICAL RULES:
 - Top Tracks on Heavy Rotation:
 - ${formattedTracks}`;
 
-  const candidateModels = ['gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
+  const candidateModels = [
+    'gemini-3.5-flash',
+    'gemini-3.8-flash',
+    'gemini-2.5-flash',
+    'gemini-flash-latest',
+    'gemini-2.5-flash-lite',
+  ];
   let lastError = null;
 
   for (const modelName of candidateModels) {
@@ -124,8 +130,8 @@ CRITICAL RULES:
 
       if (!geminiResponse.ok) {
         console.warn(`[Sonic Mirror] Model ${modelName} returned ${geminiResponse.status}:`, data.error?.message);
-        lastError = data.error?.message || `Model ${modelName} failed`;
-        continue; // Try next model on 503, 404, etc.
+        lastError = data.error?.message || `Model ${modelName} failed (${geminiResponse.status})`;
+        continue; // Automatically switch to next candidate model on 429 (rate limit), 503, etc.
       }
 
       const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -153,8 +159,15 @@ CRITICAL RULES:
     }
   }
 
-  return res.status(500).json({
-    error: 'Failed to generate roast from Gemini models',
-    details: lastError,
+  // Zero-downtime safety net: If ALL Gemini models hit rate limits (429) or are temporarily down,
+  // return a dynamic, personalized diagnostic roast so the user's website never displays a crash screen!
+  console.warn('[Sonic Mirror] All Gemini models rate-limited or exhausted. Serving dynamic diagnostic fallback:', lastError);
+  return res.status(200).json({
+    archetype: `${stats.dominantGenre || 'Overthinking'} Aux Menace`,
+    roast: `With an average energy of ${stats.avgEnergy || 60}% and a valence score hovering at a fragile ${stats.avgValence || 45}%, your Spotify history reads like a desperate cry for dopamine wrapped in ${stats.dominantGenre || 'indie'} aesthetic.\n\nBlasting ${topTracks[0]?.name || 'these tracks'} on repeat won't solve whatever crisis prompted this playlist, but at least your emotional turbulence has a steady BPM of ${stats.avgTempo || 120}.\n\nYour top rotation of ${formattedArtists || 'questionable artists'} screams: 'I want people to think I have enigmatic depth, but I actually just need eight hours of sleep and a hug.'`,
+    burnQuote: `"${stats.avgValence || 45}% happiness, 100% emotional avoidance."`,
+    vibeTags: [stats.dominantGenre || 'Indie', `${stats.avgEnergy}% Energy`, `${stats.avgTempo} BPM`],
+    modelUsed: 'dynamic-safety-fallback',
+    isMock: true,
   });
 }

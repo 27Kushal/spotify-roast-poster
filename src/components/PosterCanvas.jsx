@@ -20,8 +20,9 @@ export default function PosterCanvas({
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [copiedSuccess, setCopiedSuccess] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const currentYear = new Date().getFullYear();
 
-  // Theme Selector: 'wrapped2024' (Spotify Wrapped 2024 geometric neon) vs 'zinelab' (Risograph clinical specimen)
+  // Theme Selector: 'wrapped2024' (Geometric Neon Roast) vs 'zinelab' (Risograph clinical specimen)
   const [posterTheme, setPosterTheme] = useState('wrapped2024');
 
   // Wrapped 2024 Theme Colorway: 'dark' (Obsidian), 'red' (Cadmium Coral), 'yellow' (Canary)
@@ -253,20 +254,20 @@ export default function PosterCanvas({
       ctx.restore();
 
       // -------------------------------------------------------------
-      // 2. HERO HEADER (2024 Spotify Wrapped)
+      // 2. HERO HEADER (Current Year Spotify Roast)
       // -------------------------------------------------------------
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
 
-      // Year
+      // Current Year
       ctx.fillStyle = textPrimary;
       ctx.font = '900 170px "Archivo Black", sans-serif';
-      ctx.fillText('2024', CANVAS_WIDTH / 2, 80);
+      ctx.fillText(String(currentYear), CANVAS_WIDTH / 2, 80);
 
-      // Spotify Wrapped Eyebrow
+      // Spotify Roast Eyebrow
       ctx.font = '700 48px "Space Grotesk", sans-serif';
       ctx.fillStyle = textPrimary;
-      ctx.fillText('Spotify Wrapped', CANVAS_WIDTH / 2, 255);
+      ctx.fillText('Spotify Roast', CANVAS_WIDTH / 2, 255);
 
       // Subhead pill: Sonic Mirror Diagnosis
       ctx.save();
@@ -460,7 +461,7 @@ export default function PosterCanvas({
       ctx.fillStyle = '#A1A1AA';
       ctx.font = 'bold 20px "Space Mono", monospace';
       ctx.fillText(`LISTENER: ${(user?.display_name || 'AUTHENTICATED').toUpperCase()}`, 100, footY + 25);
-      ctx.fillText('GENERATED VIA SONIC MIRROR 2024', 100, footY + 60);
+      ctx.fillText(`GENERATED VIA SONIC MIRROR ${currentYear}`, 100, footY + 60);
 
       // Vertical Badge on Right Edge (Signature EaTemp style in reference image)
       ctx.save();
@@ -468,7 +469,7 @@ export default function PosterCanvas({
       ctx.rotate(-Math.PI / 2);
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 16px "Space Mono", monospace';
-      ctx.fillText('SONIC MIRROR // SPOTIFY WRAPPED 2024', 0, 0);
+      ctx.fillText(`SONIC MIRROR // SPOTIFY ROAST ${currentYear}`, 0, 0);
       ctx.restore();
 
       setIsRendering(false);
@@ -867,7 +868,7 @@ export default function PosterCanvas({
         const a = document.createElement('a');
         a.href = url;
         const safeArchetype = (roastData?.archetype || 'sonic-mirror-roast').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-        const filePrefix = posterTheme === 'wrapped2024' ? 'wrapped-2024' : 'diagnostic-chart';
+        const filePrefix = posterTheme === 'wrapped2024' ? `spotify-roast-${currentYear}` : 'diagnostic-chart';
         a.download = `${safeArchetype}-${filePrefix}.png`;
         document.body.appendChild(a);
         a.click();
@@ -892,13 +893,13 @@ export default function PosterCanvas({
     if (!canvas) return;
     canvas.toBlob(async (blob) => {
       if (!blob) return;
-      const file = new File([blob], 'sonic-mirror-wrapped.png', { type: 'image/png' });
+      const file = new File([blob], `sonic-mirror-roast-${currentYear}.png`, { type: 'image/png' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({
             files: [file],
-            title: 'My Sonic Mirror Spotify Wrapped',
-            text: `My Spotify 2024 Wrapped diagnosis: ${roastData?.archetype || 'Certified Unhinged'}! #${roastData?.archetype?.replace(/\s+/g, '') || 'SonicMirror'}`,
+            title: `My Sonic Mirror Spotify Roast ${currentYear}`,
+            text: `My Spotify ${currentYear} Roast diagnosis: ${roastData?.archetype || 'Certified Unhinged'}! #${roastData?.archetype?.replace(/\s+/g, '') || 'SonicMirror'}`,
           });
           return;
         } catch (err) {
@@ -940,7 +941,7 @@ export default function PosterCanvas({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 
-                {/* Button 1: Wrapped 2024 */}
+                {/* Button 1: Spotify Roast */}
                 <button
                   type="button"
                   onClick={() => setPosterTheme('wrapped2024')}
@@ -951,7 +952,7 @@ export default function PosterCanvas({
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-base">⚡ WRAPPED 2024</span>
+                    <span className="text-base">⚡ ROAST {currentYear}</span>
                     {posterTheme === 'wrapped2024' && <span className="w-2 h-2 rounded-full bg-black animate-ping" />}
                   </div>
                   <span className="font-mono text-[10px] text-zinc-600 font-normal">
@@ -1136,7 +1137,7 @@ export default function PosterCanvas({
                 <div className="absolute inset-0 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center z-20 text-center p-6">
                   <RefreshCw className="w-8 h-8 text-[#CCFF00] animate-spin mb-3" />
                   <p className="text-xs font-bold text-white font-mono uppercase tracking-wider">
-                    RENDERING {posterTheme === 'wrapped2024' ? 'WRAPPED 2024' : 'ZINE LAB'} CANVAS...
+                    RENDERING {posterTheme === 'wrapped2024' ? `SPOTIFY ROAST ${currentYear}` : 'ZINE LAB'} CANVAS...
                   </p>
                 </div>
               )}

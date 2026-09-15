@@ -1,6 +1,6 @@
 # Sonic Mirror 🪞🎶
 
-> **An AI-powered psychoacoustic laboratory that diagnoses your Spotify listening habits, roasts your music taste, and outputs high-res Risograph diagnostic posters.**
+> **An AI-powered psychoacoustic laboratory that diagnoses your Spotify listening habits, roasts your music taste, and outputs high-res 1080×1920 diagnostic posters.**
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-spotify--roast--poster.vercel.app-0047FF?style=for-the-badge&logo=vercel)](https://spotify-roast-poster.vercel.app)
 [![Vite](https://img.shields.io/badge/Vite-8.3-646CFF?style=for-the-badge&logo=vite)](https://vitejs.dev/)
@@ -13,7 +13,9 @@
 
 ## 🌐 Live Website
 
-**Experience it live here:** 👉 **[https://spotify-roast-poster.vercel.app](https://spotify-roast-poster.vercel.app)**
+**Experience it live:** 👉 **[https://spotify-roast-poster.vercel.app](https://spotify-roast-poster.vercel.app)**
+
+*(Includes a zero-login **Demo Mode** for instant preview without Spotify authentication!)*
 
 ---
 
@@ -48,13 +50,57 @@ Choose the clinical psychologist persona assigned to dissect your musical sins:
 - **Unlicensed Therapist** (Solar Orange) — Pseudo-spiritual psychological analysis.
 - **Pitchfork Elitist** (Electric Purple) — Pretentious indie snob dissecting your mainstream hypocrisies.
 
-### 4. 🖨️ Two-Column Diagnostic Poster Studio (1080×1920)
-- **Interactive Layer Toggles**:
-  - [x] Paper Texture Grain (Aged photocopy effect)
-  - [x] "Certified Unhinged" Red Rubber Stamp
-  - [x] 4-Stem Audio Spectrum Analyzer
-  - [x] Case Barcode & Authorized Signature (`Dr. Sonic Mirror`)
-- **Instagram-Story Ready**: Exports a high-resolution 1080×1920 PNG natively rendered via the HTML5 `<canvas>` API, complete with confetti celebrations.
+*Backed by a 5-tier zero-downtime model cascade (`gemini-2.5-flash` → `gemini-2.0-flash` → `gemini-1.5-flash` → `gemini-1.5-pro` → offline heuristic generator).*
+
+### 4. 🖨️ Dual-Theme Poster Studio (1080×1920 9:16 Story Export)
+Toggle between two completely distinct procedural poster themes with one click:
+- **⚡ Theme 1: Spotify Roast [Current Year] (Geometric Neon)**:
+  - Directly inspired by the official Spotify Wrapped 2024 design system.
+  - Procedural 3D layered chevrons and accordion ribbons (`#FF007F`, `#FF5722`, `#7928CA`) with wireframe depth hatch lines.
+  - Dynamic current year display (170px bold sans-serif) + `Spotify Roast` wordmark.
+  - Formatted numbered Top 5 Tracks list with album art thumbnails and artist tags.
+  - 4 Vibe Metrics badges (Energy, Valence, Tempo, Dominant Genre).
+  - Vertical right-edge rotated branding badge (`SONIC MIRROR // SPOTIFY ROAST [YEAR]`).
+  - 3 Selectable Colorways: **Obsidian Black**, **Cadmium Red**, and **Canary Yellow**.
+- **📋 Theme 2: Zine Lab (Risograph Clinical Specimen)**:
+  - Clinical observation report printed on cream paper with simulated photocopy noise grain.
+  - 4-stem DAW audio spectrum analyzer.
+  - Rotated `CERTIFIED UNHINGED` red rubber stamp.
+  - Barcode and authorized physician signature (`Dr. Sonic Mirror`).
+  - Interactive layer toggles for paper grain, stamps, analyzers, and barcodes.
+- **High-Res Export**: Direct HTML5 `<canvas>` rendering to 1080×1920 PNG with celebration confetti.
+
+### 5. 🎭 Zero-Login Demo Mode
+- Allows anyone (including visitors not on your Spotify whitelist) to explore the entire application with one click.
+- Pre-loaded with an authentic neo-noir indie music profile (M83, The Weeknd, Grimes, Beach House, HOME).
+- Powers the full 3D visualizer, audio telemetry gauges, Gemini AI diagnosis, and both poster themes.
+
+### 6. 🛡️ Resilient Telemetry & Auto-Refresh Architecture
+- **Automatic Token Refresh**: Automatically renews expiring Spotify access tokens (1-hour lifespan) via `/api/spotify-token` without interrupting active sessions.
+- **Artist Fallback Engine**: If Spotify's `/me/top/artists` endpoint fails or returns empty, the app automatically extracts unique artists from `/me/top/tracks`, preventing crashes.
+- **Cross-Device Storage Synchronization**: Synchronizes tokens across both `localStorage` and `sessionStorage`, ensuring sessions persist across mobile Safari/Chrome tab suspensions and OAuth redirects.
+
+---
+
+## 🔐 Spotify Developer Mode & Adding Test Users
+
+> [!IMPORTANT]
+> **Why do other devices see a 403 error?**
+> Spotify has restricted **Extended Quota / Production Mode** exclusively to registered corporate entities with 250,000+ MAU and removed the public quota extension button for personal/hobby apps.
+> 
+> As a result, all personal projects run in **Development Mode**, where Spotify limits access to authorized accounts.
+
+### How to allow friends or other devices to log in:
+1. Go to the **[Spotify Developer Dashboard](https://developer.spotify.com/dashboard)**.
+2. Click your app card.
+3. Click **Settings** (top right) → **User Management** tab.
+4. Click **Add User**:
+   - Enter their name.
+   - Enter the **Spotify account email address** used on that device.
+5. Click **Save**.
+6. The user can now tap **LOGOUT & RECONNECT** on the website and authenticate immediately!
+
+*(For visitors whose email hasn't been added, they can simply tap **`🎭 PREVIEW WITH DEMO DATA`** to try the full experience).*
 
 ---
 
@@ -118,4 +164,5 @@ This project is pre-configured with [`vercel.json`](./vercel.json) to automatica
 ---
 
 ## 📄 License
-MIT License. Built for fun & entertainment. Not medical or psychiatric advice.
+
+MIT License — free for educational, personal, and experimental use.

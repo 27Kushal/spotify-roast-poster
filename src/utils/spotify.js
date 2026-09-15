@@ -3,7 +3,7 @@
 const SPOTIFY_AUTH_ENDPOINT = 'https://accounts.spotify.com/authorize';
 const SPOTIFY_API_BASE = 'https://api.spotify.com/v1';
 
-export const SPOTIFY_SCOPES = ['user-top-read'];
+export const SPOTIFY_SCOPES = ['user-top-read', 'user-read-private', 'user-read-email'];
 
 /**
  * Builds the Spotify Authorization URL for the OAuth Authorization Code flow
@@ -38,14 +38,77 @@ export async function exchangeCodeForToken(code, redirectUri) {
 }
 
 /**
+ * Refreshes an expired access token via backend /api/spotify-token
+ */
+export async function refreshAccessToken(refreshToken) {
+  if (!refreshToken) throw new Error('No refresh token provided');
+  const response = await fetch('/api/spotify-token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to refresh Spotify access token');
+  }
+  return data;
+}
+
+/**
+ * Helper to process Spotify responses and construct informative error messages
+ */
+async function handleSpotifyResponse(res, contextMessage) {
+  if (res.ok) {
+    return res.json();
+  }
+
+  let errorDetail = '';
+  try {
+    const errorData = await res.json();
+    errorDetail = errorData?.error?.message || errorData?.error_description || errorData?.error || '';
+  } catch {
+    // If not JSON, ignore
+  }
+
+  const status = res.status;
+  if (status === 401) {
+    const err = new Error('Spotify session expired (401). Please re-authenticate.');
+    err.status = 401;
+    throw err;
+  }
+
+  if (status === 403) {
+    const err = new Error(
+      `Spotify Developer Mode restriction (403): ${
+        errorDetail ||
+        'User not registered in the Developer Dashboard. In Spotify Developer Mode, the account email must be added under "Users and Access".'
+      }`
+    );
+    err.status = 403;
+    throw err;
+  }
+
+  if (status === 429) {
+    const retryAfter = res.headers.get('Retry-After');
+    const err = new Error(`Spotify rate limit reached (429). Please wait ${retryAfter ? `${retryAfter}s` : 'a few seconds'}.`);
+    err.status = 429;
+    throw err;
+  }
+
+  const err = new Error(`${contextMessage} (${status}${errorDetail ? `: ${errorDetail}` : ''})`);
+  err.status = status;
+  throw err;
+}
+
+/**
  * Fetches user profile from Spotify
  */
 export async function fetchUserProfile(token) {
   const res = await fetch(`${SPOTIFY_API_BASE}/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error(`Spotify /me failed: ${res.statusText}`);
-  return res.json();
+  return handleSpotifyResponse(res, 'Spotify /me failed');
 }
 
 /**
@@ -58,8 +121,7 @@ export async function fetchTopTracks(token, timeRange = 'medium_term', limit = 2
       headers: { Authorization: `Bearer ${token}` },
     }
   );
-  if (!res.ok) throw new Error(`Failed to fetch top tracks: ${res.statusText}`);
-  return res.json();
+  return handleSpotifyResponse(res, 'Failed to fetch top tracks');
 }
 
 /**
@@ -72,8 +134,7 @@ export async function fetchTopArtists(token, timeRange = 'medium_term', limit = 
       headers: { Authorization: `Bearer ${token}` },
     }
   );
-  if (!res.ok) throw new Error(`Failed to fetch top artists: ${res.statusText}`);
-  return res.json();
+  return handleSpotifyResponse(res, 'Failed to fetch top artists');
 }
 
 /**

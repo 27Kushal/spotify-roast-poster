@@ -17,6 +17,7 @@ export default function App() {
     loginUrl,
     authConfig,
     handleCallback,
+    refreshAuthToken,
     logout,
   } = useSpotifyAuth();
 
@@ -28,7 +29,7 @@ export default function App() {
     isLoading: isDataLoading,
     error: dataError,
     refetch,
-  } = useSpotifyData(token);
+  } = useSpotifyData(token, { refreshAuthToken, logout });
 
   const {
     roastData,
@@ -79,14 +80,22 @@ export default function App() {
 
   // 3. Error State
   if (dataError) {
+    const is403 = dataError.includes('403') || dataError.includes('Developer Mode') || dataError.includes('whitelisted');
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-zine-cream text-zine-black font-body">
-        <div className="max-w-md w-full p-8 border-4 border-zine-black bg-white shadow-brutal text-center">
+        <div className="max-w-lg w-full p-8 border-4 border-zine-black bg-white shadow-brutal text-center">
           <div className="w-14 h-14 border-2 border-zine-black bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 shadow-brutal-sm">
             <AlertTriangle className="w-8 h-8" />
           </div>
           <h2 className="font-headline text-2xl uppercase tracking-wider mb-2">TELEMETRY ERROR</h2>
-          <p className="font-mono text-xs text-zinc-600 mb-6">{dataError}</p>
+          <p className="font-mono text-xs text-zinc-700 mb-4 bg-zinc-100 p-3 border-2 border-black break-words">{dataError}</p>
+
+          {is403 && (
+            <div className="mb-6 p-3.5 bg-amber-50 border-2 border-amber-500 text-left text-xs font-mono text-amber-900 leading-relaxed">
+              <strong>⚠️ Spotify Developer Mode:</strong> In Spotify Developer Mode, only accounts explicitly added to the <em>"Users and Access"</em> whitelist in your Spotify Developer Portal can authenticate. Add this Spotify account's email to test on this device.
+            </div>
+          )}
+
           <div className="flex justify-center gap-3">
             <button
               onClick={refetch}
@@ -99,7 +108,7 @@ export default function App() {
               onClick={logout}
               className="inline-flex items-center gap-2 px-6 py-3 border-2 border-zine-black bg-white hover:bg-zinc-100 text-black font-headline text-sm uppercase tracking-wider shadow-brutal-sm hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
             >
-              <span>LOGOUT</span>
+              <span>LOGOUT & RECONNECT</span>
             </button>
           </div>
         </div>

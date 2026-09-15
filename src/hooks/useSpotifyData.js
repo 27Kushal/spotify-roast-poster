@@ -7,7 +7,7 @@ import {
   computeAggregateStats,
 } from '../utils/spotify';
 
-export function useSpotifyData(token) {
+export function useSpotifyData(token, { refreshAuthToken, logout } = {}) {
   const [user, setUser] = useState(null);
   const [tracks, setTracks] = useState([]);
   const [artists, setArtists] = useState([]);
@@ -22,38 +22,85 @@ export function useSpotifyData(token) {
     setIsLoading(true);
     setError(null);
 
+    let activeToken = token;
+
     try {
-      // 1. Fetch User Profile
-      const userProfile = await fetchUserProfile(token).catch((err) => {
+      // 1. Fetch User Profile (non-blocking if it fails)
+      const userProfile = await fetchUserProfile(activeToken).catch((err) => {
         console.warn('Could not fetch user profile:', err);
         return null;
       });
       setUser(userProfile);
 
-      // 2. Fetch Top Tracks & Top Artists concurrently
-      const [tracksData, artistsData] = await Promise.all([
-        fetchTopTracks(token, 'medium_term', 20),
-        fetchTopArtists(token, 'medium_term', 20),
-      ]);
+      // 2. Fetch Top Tracks with automatic 401 retry & time range fallbacks
+      let tracksData = null;
+      try {
+        tracksData = await fetchTopTracks(activeToken, 'medium_term', 20);
+        if (!tracksData?.items || tracksData.items.length === 0) {
+          // Fallback to short_term if medium_term is empty
+          tracksData = await fetchTopTracks(activeToken, 'short_term', 20);
+        }
+        if (!tracksData?.items || tracksData.items.length === 0) {
+          // Fallback to long_term
+          tracksData = await fetchTopTracks(activeToken, 'long_term', 20);
+        }
+      } catch (err) {
+        if (err.status === 401 && refreshAuthToken) {
+          console.log('[Sonic Mirror] Token expired on tracks fetch. Attempting automatic refresh...');
+          const refreshedToken = await refreshAuthToken();
+          if (refreshedToken) {
+            activeToken = refreshedToken;
+            tracksData = await fetchTopTracks(activeToken, 'medium_term', 20);
+          } else {
+            throw err;
+          }
+        } else {
+          throw err;
+        }
+      }
 
-      const topTracks = tracksData.items || [];
-      const topArtists = artistsData.items || [];
+      const topTracks = tracksData?.items || [];
+      if (topTracks.length === 0) {
+        throw new Error('No listening history found on this Spotify account. Play a few songs on Spotify and try again!');
+      }
       setTracks(topTracks);
+
+      // 3. Fetch Top Artists with Graceful Fallback
+      // Never crash the dashboard if Spotify top artists endpoint fails!
+      let topArtists = [];
+      try {
+        const artistsData = await fetchTopArtists(activeToken, 'medium_term', 20);
+        topArtists = artistsData?.items || [];
+      } catch (artistErr) {
+        console.warn('[Sonic Mirror] fetchTopArtists failed. Extracting artists from top tracks as fallback:', artistErr);
+      }
+
+      // If top artists endpoint returned empty or failed, extract unique artists from topTracks
+      if (topArtists.length === 0) {
+        const artistMap = new Map();
+        for (const t of topTracks) {
+          for (const a of (t.artists || [])) {
+            if (a && a.id && !artistMap.has(a.id)) {
+              artistMap.set(a.id, {
+                id: a.id,
+                name: a.name,
+                genres: [],
+                images: t.album?.images || [],
+                popularity: t.popularity || 50,
+              });
+            }
+          }
+        }
+        topArtists = Array.from(artistMap.values());
+      }
       setArtists(topArtists);
 
-      // Explicit spec requirement: Log top tracks to console
-      console.log('🎵 [Sonic Mirror] Successfully fetched User Top Tracks (medium_term):', topTracks);
-      console.log(
-        '🎶 [Sonic Mirror] Top Tracks Summary:',
-        topTracks.map((t, idx) => `${idx + 1}. ${t.name} — ${t.artists.map((a) => a.name).join(', ')}`)
-      );
-
-      // 3. Fetch Audio Features for these tracks (with graceful Nov 2024 policy fallback)
+      // 4. Fetch Audio Features for tracks
       const trackIds = topTracks.map((t) => t.id).filter(Boolean);
-      const audioResult = await fetchAudioFeatures(token, trackIds);
+      const audioResult = await fetchAudioFeatures(activeToken, trackIds);
       setAudioFeatures(audioResult.features);
 
-      // 4. Compute aggregate statistics
+      // 5. Compute aggregate statistics
       const computedStats = computeAggregateStats(topTracks, topArtists, audioResult);
       setStats(computedStats);
 
@@ -64,7 +111,7 @@ export function useSpotifyData(token) {
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [token, refreshAuthToken]);
 
   useEffect(() => {
     if (token) {

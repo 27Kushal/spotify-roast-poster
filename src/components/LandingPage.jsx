@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowRight, AlertCircle, Sparkles, Activity, ShieldAlert, Disc3, Zap, Flame } from 'lucide-react';
 import ThreeVisualizer from './ThreeVisualizer';
 
-export default function LandingPage({ loginUrl, authConfig }) {
+export default function LandingPage({ loginUrl, authConfig, onTryDemo }) {
   const isConfigured = authConfig?.isConfigured;
 
   return (
@@ -37,6 +37,16 @@ export default function LandingPage({ loginUrl, authConfig }) {
 
           {/* Right Action */}
           <div className="flex items-center gap-3">
+            {onTryDemo && (
+              <button
+                type="button"
+                onClick={onTryDemo}
+                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 border-2 border-black bg-[#FFE600] text-black font-headline text-xs uppercase tracking-wider shadow-[3px_3px_0px_#000] hover:bg-[#CCFF00] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>TRY DEMO</span>
+              </button>
+            )}
             <a
               href={isConfigured ? loginUrl : '#'}
               onClick={(e) => {
@@ -144,6 +154,17 @@ export default function LandingPage({ loginUrl, authConfig }) {
                 >
                   <span>HOW IT WORKS ↓</span>
                 </a>
+
+                {onTryDemo && (
+                  <button
+                    type="button"
+                    onClick={onTryDemo}
+                    className="inline-flex items-center gap-2 px-6 py-4.5 border-3 border-black bg-[#FFE600] font-headline text-sm font-bold uppercase tracking-wider text-black hover:bg-[#CCFF00] transition-all shadow-[4px_4px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5"
+                  >
+                    <Sparkles className="w-4 h-4 text-black" />
+                    <span>TRY DEMO (NO LOGIN) ★</span>
+                  </button>
+                )}
               </div>
 
               {/* 3 Bold Multi-Color Metric Preview Boxes (Directly from Poster Palette) */}
